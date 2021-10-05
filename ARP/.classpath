@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-14">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/computerNetwork/Downloads/jnetpcap-1.4.r1425/jnetpcap.jar" sourcepath="C:/Users/computerNetwork/Downloads/jnetpcap-src-1.4.r1425-1.zip">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/C:/Users/computerNetwork/Downloads/jnetpcap-javadoc-1.4.r1425-1.zip!/"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="C:/Users/computerNetwork/Downloads/jnetpcap-1.4.r1425"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

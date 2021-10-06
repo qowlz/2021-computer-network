@@ -2,7 +2,7 @@ package arp;
 
 import java.util.ArrayList;
 
-public class ChatAppLayer implements BaseLayer {
+public class ChatAppLayer extends BaseLayer{
     public int nUpperLayerCount = 0;
     public String pLayerName = null;
     public BaseLayer p_UnderLayer = null;
@@ -59,7 +59,7 @@ public class ChatAppLayer implements BaseLayer {
         return input;
     }
 
-//    private void waitACK() { //ACK 체크
+//    private void waitACK() { //ACK 泥댄겕
 //        while (ackChk.size() <= 0) {
 //            try {
 //                Thread.sleep(10);
@@ -76,33 +76,33 @@ public class ChatAppLayer implements BaseLayer {
         m_sHeader.capp_totlen = intToByte2(length);
         m_sHeader.capp_type = (byte) (0x01);
 
-        // 첫번째 전송
+        // 泥ル쾲吏� �쟾�넚
         System.arraycopy(input, 0, bytes, 0, 1456);
         bytes = objToByte(m_sHeader, bytes, 1456);
-        this.GetUnderLayer().Send(bytes, bytes.length);
+        this.GetUnderLayer().Send(bytes);
 
         int maxLen = length / 1456;
-        	/* 중간 단편화  */
+        	/* 以묎컙 �떒�렪�솕  */
         m_sHeader.capp_type = (byte) (0x02);
         m_sHeader.capp_totlen = intToByte2(10);
         for(i = 1; i < maxLen; i ++) {
         	//waitACK();
-        	//마지막일경우
+        	//留덉�留됱씪寃쎌슦
         	if(i + 1 < maxLen && length%10 == 0)
         		m_sHeader.capp_type = (byte) (0x03);
         	System.arraycopy(input, 1456 * i, bytes, 0, 1456);
         	bytes = objToByte(m_sHeader, bytes, 1456);
-        	this.GetUnderLayer().Send(bytes, bytes.length);
+        	this.GetUnderLayer().Send(bytes);
         }
         if (length % 1456 != 0) {
         	//waitACK();
             m_sHeader.capp_type = (byte) (0x03);
-            /*과제  */
+            /*怨쇱젣  */
             m_sHeader.capp_totlen = intToByte2(length%1456);
             bytes = new byte[length % 1456];
             System.arraycopy(input, length - (length % 1456), bytes, 0, length % 1456);
             bytes = objToByte(m_sHeader, bytes, bytes.length);
-            this.GetUnderLayer().Send(bytes, bytes.length);
+            this.GetUnderLayer().Send(bytes);
         }
     }
  
@@ -111,14 +111,14 @@ public class ChatAppLayer implements BaseLayer {
         m_sHeader.capp_totlen = intToByte2(length);
         m_sHeader.capp_type = (byte) (0x00);
  
-        //waitACK();//ACK들오는지 확인
+        //waitACK();//ACK�뱾�삤�뒗吏� �솗�씤
         if (length > 1456) {
         	fragSend(input, length);
-        } //10보다 클시 fragsend를 이용하여 단편화 시켜서 송신
+        } //10蹂대떎 �겢�떆 fragsend瑜� �씠�슜�븯�뿬 �떒�렪�솕 �떆耳쒖꽌 �넚�떊
         else {
         	bytes = objToByte(m_sHeader, input, input.length);
-        	this.GetUnderLayer().Send(bytes, bytes.length);
-        } // 저번주거랑 같음
+        	this.GetUnderLayer().Send(bytes);
+        } // ��踰덉＜嫄곕옉 媛숈쓬
         return true;
     }
  
@@ -134,12 +134,12 @@ public class ChatAppLayer implements BaseLayer {
         tempType |= (byte) (input[2] & 0xFF);
         
         if(tempType == 0) {
-            /*  과제   */
+            /*  怨쇱젣   */
         	data = RemoveCappHeader(input, input.length);
         	this.GetUpperLayer(0).Receive(data);
         }
         else{
-            /*  과제   */
+            /*  怨쇱젣   */
         	if(tempType == 1) {
         		int size = byte2ToInt(input[0], input[1]);
             	fragBytes = new byte[byte2ToInt(input[0], input[1])];
@@ -153,63 +153,8 @@ public class ChatAppLayer implements BaseLayer {
 	        	if(tempType == 3) this.GetUpperLayer(0).Receive(fragBytes);
         	}
         }
-        this.GetUnderLayer().Send(null, 0); // ack 송신
+        this.GetUnderLayer().Send(new byte[] {}); // ack �넚�떊
         return true;
     }
     
-    private byte[] intToByte2(int value) {
-        byte[] temp = new byte[2];
-        temp[0] |= (byte) ((value & 0xFF00) >> 8);
-        temp[1] |= (byte) (value & 0xFF);
-
-        return temp;
-    }
-
-    private int byte2ToInt(byte value1, byte value2) {
-        return (int)((value1 << 8) | (value2));
-    }
-
-    @Override
-    public String GetLayerName() {
-        // TODO Auto-generated method stub
-        return pLayerName;
-    }
-
-    @Override
-    public BaseLayer GetUnderLayer() {
-        // TODO Auto-generated method stub
-        if (p_UnderLayer == null)
-            return null;
-        return p_UnderLayer;
-    }
-
-    @Override
-    public BaseLayer GetUpperLayer(int nindex) {
-        // TODO Auto-generated method stub
-        if (nindex < 0 || nindex > nUpperLayerCount || nUpperLayerCount < 0)
-            return null;
-        return p_aUpperLayer.get(nindex);
-    }
-
-    @Override
-    public void SetUnderLayer(BaseLayer pUnderLayer) {
-        // TODO Auto-generated method stub
-        if (pUnderLayer == null)
-            return;
-        this.p_UnderLayer = pUnderLayer;
-    }
-
-    @Override
-    public void SetUpperLayer(BaseLayer pUpperLayer) {
-        // TODO Auto-generated method stub
-        if (pUpperLayer == null)
-            return;
-        this.p_aUpperLayer.add(nUpperLayerCount++, pUpperLayer);
-    }
-
-    @Override
-    public void SetUpperUnderLayer(BaseLayer pUULayer) {
-        this.SetUpperLayer(pUULayer);
-        pUULayer.SetUnderLayer(this);
-    }
 }

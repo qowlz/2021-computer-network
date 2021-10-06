@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
@@ -24,17 +25,16 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
+import org.jnetpcap.Pcap;
+
 import arp.ARPLayer.ARPCache;
 import arp.ARPLayer.Proxy;
+import arp.BaseLayer.ARP_HEADER;
 import arp.ChatFileDlg.setAddressListener;
 
-public class ArpAppLayer extends JFrame implements BaseLayer{
-	public int nUpperLayerCount = 0;
-	public String pLayerName = null;
-	public BaseLayer p_UnderLayer = null;
-	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
-	BaseLayer UnderLayer;
+public class ArpAppLayer extends BaseLayer{
 	
+	private JFrame jframe;
 	private JPanel contentPane;
 	private JTextField GARPTextField;
 	private JButton ARPItemDelete;
@@ -46,6 +46,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 	private JTextField IPTextField;
 	private JButton ARP_IPSend;
 	private JButton GARPSend;
+	
 	
 	private DefaultTableModel arpModel, proxyModel;
 	String arpModelHeader[] = {"IpAddress", "MacAddress", "Status"};
@@ -62,6 +63,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 	static int adapterNumber = 0;
 	
 	public static void main(String[] args) throws IOException {
+	
 		NILayer niLayer = new NILayer("NI");
 		EthernetLayer ethernetLayer = new EthernetLayer("Ethernet");
 		ARPLayer arpLayer = new ARPLayer("ARP");
@@ -80,24 +82,26 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *IP ( *TCP ( *GUI ) ) ) ) )");
 		
 		arpLayer.setArpAppLayer(arpAppLayer);
-		ipLayer.setSrcIp(InetAddress.getLocalHost().getAddress());
-		arpLayer.setSrcIp(InetAddress.getLocalHost().getAddress());
-		arpLayer.setSrcMac(niLayer.GetAdapterObject(adapterNumber).getHardwareAddress());
+		ipLayer.Header.ip_src = ipAddress;
+		arpLayer.Header.ip_src = ipAddress;
+		arpLayer.Header.mac_src = macAddress;
 		
-		niLayer.SetAdapterNumber(0);
+		niLayer.setDevice(0, 64 * 1024, Pcap.MODE_PROMISCUOUS, 10 * 1000);
 		niLayer.Receive();
+		
 	}
 	
 	
 	public ArpAppLayer(String pName) throws IOException {
 		pLayerName = pName;
+		jframe = new JFrame();
 		
-		setTitle("TestARP");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 900, 500);
+		jframe.setTitle("TestARP");
+		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		jframe.setBounds(100, 100, 900, 500);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		setContentPane(contentPane);
+		jframe.setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
 		/*-----ARP Panel-----*/
@@ -189,7 +193,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		JButton btnEnd = new JButton("종료");
 		btnEnd.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				setVisible(false);
+				jframe.setVisible(false);
 			}
 		});
 		btnEnd.setBounds(334, 396, 114, 42);
@@ -198,13 +202,13 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		JButton btnCancel = new JButton("취소");
 		btnCancel.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				setVisible(false);
+				jframe.setVisible(false);
 			}
 		});
 		btnCancel.setBounds(458, 396, 114, 42);
 		contentPane.add(btnCancel);
 		
-		setVisible(true);
+		jframe.setVisible(true);
 	}
 	
 	class proxyWindow extends JFrame{
@@ -293,10 +297,10 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 					byte[] dstIP = ip.getAddress();
 					
 					ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-					arpLayer.setDstIp(dstIP);
-					
+					arpLayer.Header.ip_dst = Arrays.copyOf(dstIP, 4);
+								
 					TCPLayer tcpLayer = (TCPLayer)m_LayerMgr.GetLayer("TCP");
-					tcpLayer.Send(new byte[0], 0);
+					tcpLayer.Send(new byte[0]);
 					
 					//arpLayer.Send(new byte[0], 0);
 					
@@ -368,16 +372,11 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 				byte[] mac = macStringToByte(GARPTextField.getText());
 				
 				ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-				arpLayer.setSrcMac(mac);
-				try {
-					arpLayer.setDstIp(InetAddress.getLocalHost().getAddress());
-				} catch (UnknownHostException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				BaseLayer.macAddress = mac;
+				arpLayer.Header.ip_dst = ipAddress;
 				
 				TCPLayer tcpLayer = (TCPLayer)m_LayerMgr.GetLayer("TCP");
-				tcpLayer.Send(new byte[0], 0);
+				tcpLayer.Send(new byte[0]);
 				
 				//arpLayer.Send(new byte[0], 0);
 				GARPTextField.setText("");
@@ -483,49 +482,5 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
     	}
 	}
 	
-	@Override
-	public void SetUnderLayer(BaseLayer pUnderLayer) {
-		// TODO Auto-generated method stub
-		if (pUnderLayer == null)
-			return;
-		this.p_UnderLayer = pUnderLayer;
-	}
 
-	@Override
-	public void SetUpperLayer(BaseLayer pUpperLayer) {
-		// TODO Auto-generated method stub
-		if (pUpperLayer == null)
-			return;
-		this.p_aUpperLayer.add(nUpperLayerCount++, pUpperLayer);
-		// nUpperLayerCount++;
-	}
-
-	@Override
-	public String GetLayerName() {
-		// TODO Auto-generated method stub
-		return pLayerName;
-	}
-
-	@Override
-	public BaseLayer GetUnderLayer() {
-		// TODO Auto-generated method stub
-		if (p_UnderLayer == null)
-			return null;
-		return p_UnderLayer;
-	}
-
-	@Override
-	public BaseLayer GetUpperLayer(int nindex) {
-		// TODO Auto-generated method stub
-		if (nindex < 0 || nindex > nUpperLayerCount || nUpperLayerCount < 0)
-			return null;
-		return p_aUpperLayer.get(nindex);
-	}
-
-	@Override
-	public void SetUpperUnderLayer(BaseLayer pUULayer) {
-		this.SetUpperLayer(pUULayer);
-		pUULayer.SetUnderLayer(this);
-
-	}
 }

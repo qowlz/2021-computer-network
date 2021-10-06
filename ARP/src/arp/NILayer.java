@@ -1,6 +1,6 @@
 package arp;
 
-import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -9,152 +9,87 @@ import org.jnetpcap.PcapIf;
 import org.jnetpcap.packet.PcapPacket;
 import org.jnetpcap.packet.PcapPacketHandler;
 
-public class NILayer implements BaseLayer {
+public class NILayer extends BaseLayer {
 
-	public int nUpperLayerCount = 0;
-	public String pLayerName = null;
-	public BaseLayer p_UnderLayer = null;
-	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
-
-	int m_iNumAdapter;
-	public Pcap m_AdapterObject;
-	public PcapIf device;
-	public ArrayList<PcapIf> m_pAdapterList;
+	ArrayList<PcapIf> allDevs = new ArrayList<PcapIf>();
 	StringBuilder errbuf = new StringBuilder();
+	public Pcap pcap;
 
-	static {
-		try {
-			System.load(new File("jnetpcap.dll").getAbsolutePath());
-			System.out.println(new File("jnetpcap.dll").getAbsolutePath());
-		} catch (UnsatisfiedLinkError e) {
-			System.out.println("Native code library failed to load. \n" + e);
-			System.exit(0);
+	public NILayer(String pName) {
+		pLayerName = pName;	
+		
+		int r = Pcap.findAllDevs(allDevs, errbuf);
+		
+		if (r == Pcap.NOT_OK || allDevs.isEmpty()) {
+			System.out.println("네트워크 어뎁터가 없습니다.");
+			return;
 		}
 	}
 	
-	public NILayer(String pName) {
-		// super(pName);
-		pLayerName = pName;
-		m_pAdapterList = new ArrayList<PcapIf>();
-		m_iNumAdapter = 0;
-		SetAdapterList();
-	}
+	public boolean setDevice(int idx, int snaplen, int flags, int timeout) {
+		PcapIf device = allDevs.get(idx);
+		pcap = Pcap.openLive(device.getName(), snaplen, flags, timeout, errbuf);
+		try {
+			macAddress = device.getHardwareAddress();
+			ipAddress = device.getAddresses().get(0).getAddr().getData();
+			System.out.println(MacToStr(macAddress));
+		} catch (IOException e) { System.out.println("주소를 찾을 수 없습니다."); }
 
-	public void PacketStartDriver() {
-		int snaplen = 64 * 1024; // Capture all packets, no trucation
-		int flags = Pcap.MODE_PROMISCUOUS; // capture all packets
-		int timeout = 10 * 1000; // 10 seconds in millis
-		m_AdapterObject = Pcap.openLive(m_pAdapterList.get(m_iNumAdapter).getName(), snaplen, flags, timeout, errbuf);
-	}
-
-	public PcapIf GetAdapterObject(int iIndex) {
-		return m_pAdapterList.get(iIndex);
-	}
-
-	public void SetAdapterNumber(int iNum) {
-		m_iNumAdapter = iNum;
-		PacketStartDriver();
-		Receive();
-	}
-
-	public void SetAdapterList() {
-		int r = Pcap.findAllDevs(m_pAdapterList, errbuf);
-		System.out.println("I/F 갯수: "+m_pAdapterList.size());
-		
-		if(r == Pcap.NOT_OK || m_pAdapterList.isEmpty())
-			System.out.println("[Error] 네트워크 장치를 찾을 수 없습니다. Error : " + errbuf.toString());
-	}
-
-	public ArrayList<PcapIf> getAdapterList() {
-		return m_pAdapterList;
-	}
-
-	public boolean Send(byte[] input, int length) {
-
-		ByteBuffer buf = ByteBuffer.wrap(input);
-		if (m_AdapterObject.sendPacket(buf) != Pcap.OK) {
-			System.err.println(m_AdapterObject.getErr());
+		if (pcap == null) {
+			System.out.printf("pcap 객체 생성실패 - %s\n", errbuf.toString());
 			return false;
-		}
-		return true;
+		}	return true;
 	}
-
+		
 	public boolean Receive() {
-		Receive_Thread thread = new Receive_Thread(m_AdapterObject, this.GetUpperLayer(0));
+		Receive_Thread thread = new Receive_Thread(this.pcap, this.GetUpperLayer(0));
 		Thread obj = new Thread(thread);
 		obj.start();
 
 		return false;
 	}
-
+	
 	@Override
-	public void SetUnderLayer(BaseLayer pUnderLayer) {
-		// TODO Auto-generated method stub
-		if (pUnderLayer == null)
-			return;
-		p_UnderLayer = pUnderLayer;
+	public boolean Send(byte[] data) {
+		ByteBuffer buf = ByteBuffer.wrap(data);
+		if (pcap.sendPacket(buf) != Pcap.OK) {
+			System.err.println(pcap.getErr());
+			return false;
+		}	return true;
 	}
-
-	@Override
-	public void SetUpperLayer(BaseLayer pUpperLayer) {
-		// TODO Auto-generated method stub
-		if (pUpperLayer == null)
-			return;
-		this.p_aUpperLayer.add(nUpperLayerCount++, pUpperLayer);
-		// nUpperLayerCount++;
+	
+	public PcapIf GetAdapterObject(int iIndex) {
+		return allDevs.get(iIndex);
 	}
-
-	@Override
-	public String GetLayerName() {
-		// TODO Auto-generated method stub
-		return pLayerName;
+	
+	public ArrayList<PcapIf> getAdapterList() {
+		return allDevs;
 	}
-
-	@Override
-	public BaseLayer GetUnderLayer() {
-		if (p_UnderLayer == null)
-			return null;
-		return p_UnderLayer;
-	}
-
-	@Override
-	public BaseLayer GetUpperLayer(int nindex) {
-		// TODO Auto-generated method stub
-		if (nindex < 0 || nindex > nUpperLayerCount || nUpperLayerCount < 0)
-			return null;
-		return p_aUpperLayer.get(nindex);
-	}
-
-	@Override
-	public void SetUpperUnderLayer(BaseLayer pUULayer) {
-		this.SetUpperLayer(pUULayer);
-		pUULayer.SetUnderLayer(this);
-
-	}
+	
 }
 
 class Receive_Thread implements Runnable {
 	byte[] data;
-	Pcap AdapterObject;
+	Pcap adapter;
 	BaseLayer UpperLayer;
 
-	public Receive_Thread(Pcap m_AdapterObject, BaseLayer m_UpperLayer) {
-		// TODO Auto-generated constructor stub
-		AdapterObject = m_AdapterObject;
-		UpperLayer = m_UpperLayer;
+	public Receive_Thread(Pcap adt, BaseLayer upper) {
+		adapter = adt;
+		UpperLayer = upper;
 	}
 
 	@Override
 	public void run() {
 		while (true) {
-			PcapPacketHandler<String> jpacketHandler = new PcapPacketHandler<String>() {
+			PcapPacketHandler<String> pph = new PcapPacketHandler<String>() {
 				public void nextPacket(PcapPacket packet, String user) {
 					data = packet.getByteArray(0, packet.size());
+					
 					UpperLayer.Receive(data);
 				}
 			};
 
-			AdapterObject.loop(100000, jpacketHandler, "");
+			adapter.loop(100000, pph, "");
 		}
 	}
 }

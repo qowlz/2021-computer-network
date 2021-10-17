@@ -13,7 +13,7 @@ public class TCPLayer extends BaseLayer {
 	public boolean Send(byte[] input) {
 		Header.data = Arrays.copyOf(input, input.length);
 		byte[] b = ObjToByte(Header);
-		System.out.println(Header.data.length);
+		System.out.println("TCP send length" + Header.data.length);
 		GetUnderLayer(0).Send(Arrays.copyOf(b, b.length));
 		return true;
 	}

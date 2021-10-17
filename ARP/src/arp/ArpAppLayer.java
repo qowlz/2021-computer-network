@@ -56,8 +56,6 @@ public class ArpAppLayer extends BaseLayer{
 	private JTextField proxyEntryIp;
 	private JTextField proxyEntryMac;
 
-	private static LayerManager m_LayerMgr = new LayerManager();
-	
 	static int adapterNumber = 0;
 
 	public ArpAppLayer(String pName) {
@@ -264,10 +262,10 @@ public class ArpAppLayer extends BaseLayer{
 					ip = InetAddress.getByName(inputIP);
 					byte[] dstIP = ip.getAddress();
 					
-					ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-					arpLayer.Header.ip_dst = Arrays.copyOf(dstIP, 4);
+					IPLayer IP = (IPLayer)m_LayerMgr.GetLayer("IP");
+					IP.Header.ip_dst = Arrays.copyOf(dstIP, 4);
 								
-					TCPLayer tcpLayer = (TCPLayer)m_LayerMgr.GetLayer("TCP");
+					TCPLayer tcpLayer = (TCPLayer)GetUnderLayer(0);
 					tcpLayer.Send(new byte[0]);
 					
 					//arpLayer.Send(new byte[0], 0);
@@ -339,9 +337,10 @@ public class ArpAppLayer extends BaseLayer{
 				//GARP Send버튼을 눌렀을 때
 				byte[] mac = macStringToByte(GARPTextField.getText());
 				
-				ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
+				IPLayer IP = (IPLayer)m_LayerMgr.GetLayer("IP");
+
 				BaseLayer.macAddress = mac;
-				arpLayer.Header.ip_dst = ipAddress;
+				IP.Header.ip_dst = ipAddress;
 				
 				TCPLayer tcpLayer = (TCPLayer)m_LayerMgr.GetLayer("TCP");
 				tcpLayer.Send(new byte[0]);

@@ -56,15 +56,14 @@ public class IPLayer extends BaseLayer {
 			EthernetLayer Ethernet = (EthernetLayer)GetUnderLayer(1);
 			Ethernet.Header.frame_type = 0x0806; // type 지정하
 				
-			if (Arrays.equals(UpperHeader.data, new byte[0]) == false) { // 데이터가 있는데 미적중 했다는뜻
-				System.out.println("패킷 메시지네요");
+			if (UpperHeader.data.length != 0) { // 데이터가 있는데 미적중 했다는뜻
+				System.out.println("패킷 불발");
 				IP_HEADER Pacekt = new IP_HEADER();
 				Pacekt = ByteToObj(ObjToByte(Header),IP_HEADER.class);
 				packet_queue.add(Pacekt); // 불발된 패킷 큐에 넣기			
 				Header.data = new byte[0]; // data 삭제 -> 헤더만 보내기
 			}
 
-			System.out.println("ARP 메시지네요");
 			byte[] b = ObjToByte(Header);
 			ARP.Send(Arrays.copyOf(b, b.length)); // ARP로 보냄
 		}else { // 목적지 ip의 mac주소가 있으면

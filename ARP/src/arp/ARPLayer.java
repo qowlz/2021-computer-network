@@ -6,6 +6,8 @@ import java.util.Iterator;
 
 import javax.swing.JOptionPane;
 
+import arp.BaseLayer.TCP_HEADER;
+
 public class ARPLayer extends BaseLayer{
 
 	public static ArrayList<ARP_CACHE> cache_table = new ArrayList<ARP_CACHE>();
@@ -26,6 +28,9 @@ public class ARPLayer extends BaseLayer{
 	@Override
 	public boolean Send(byte[] input) {
 	
+		IP_HEADER UpperHeader = ByteToObj(input, IP_HEADER.class);
+		
+		Header.ip_dst = Arrays.copyOf(UpperHeader.ip_dst, 4);
 		Header.opcode = 0x01; // request 타입
 		Header.ip_src = Arrays.copyOf(ipAddress,4);
 		Header.mac_src = Arrays.copyOf(macAddress,6); // 송신지 본인으로 설정
@@ -57,17 +62,13 @@ public class ARPLayer extends BaseLayer{
 
 		Header = ByteToObj(input, ARP_HEADER.class);
 		
-		System.out.println(ipByteToString(Header.ip_src) + " -> " + ipByteToString(Header.ip_dst));
-		
 		ARP_CACHE tempARP = getCache(Header.ip_src);
 
 		switch (Header.opcode) { // arp 패킷 옵코드로 분류
 		case 0x01: // request
 			
 			if(Arrays.equals(Header.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
-			
-			System.out.println("ARP reqst ");
-			
+					
 			// 요청이 오면 일단 저장
 			if(tempARP == null) { // 캐시테이블 미적중
 				ARP_CACHE arpCache = new ARP_CACHE(Header.ip_src, Header.mac_src, true);
@@ -84,7 +85,6 @@ public class ARPLayer extends BaseLayer{
 				Header.mac_dst = Arrays.copyOf(Header.mac_src,6); // 수신지를 목적지로
 				Header.mac_src = Arrays.copyOf(macAddress,6); // 송신지 다시지정
 				Header.ip_src = Arrays.copyOf(ipAddress,4); // 송신지 ip 나로 지정
-				System.out.println("arp 응답");
 				GetUnderLayer(0).Send(ObjToByte(Header));
 
 			}else{ // 목적지가 자신이 아닌경우 프록시 찾기
@@ -108,9 +108,7 @@ public class ARPLayer extends BaseLayer{
 		case 0x02: // reply
 			
 			if(Arrays.equals(Header.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
-			
-			System.out.println(MacToStr(Header.mac_src) + " -> " + MacToStr(Header.mac_dst));
-			System.out.println("ARP reply ");
+
 			new JOptionPane().showMessageDialog(null,"응답이 왔어요");
 			// 수신
 			if(tempARP == null) { // 캐시테이블 미적중

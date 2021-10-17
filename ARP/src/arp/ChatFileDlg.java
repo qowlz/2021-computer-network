@@ -76,7 +76,7 @@ public class ChatFileDlg extends BaseLayer {
 		m_LayerMgr.AddLayer(new FileAppLayer("File"));
 		m_LayerMgr.AddLayer(new ChatAppLayer("Chat"));
 		
-		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *IP ( *TCP ( *Chat ( *ChatFileGUI ) *File ( +ChatFileGUI ) *ARPGUI ) ) ) *IP ) )");
+		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *IP ( *TCP ( *Chat ( *ChatFileGUI ) *File ( *ChatFileGUI ) *ARPGUI ) ) ) *IP ) )");
 
 		ARPLayer ARP = (ARPLayer) m_LayerMgr.GetLayer("ARP");
 		ARP.appLayer = (ArpAppLayer) m_LayerMgr.GetLayer("ARPGUI");

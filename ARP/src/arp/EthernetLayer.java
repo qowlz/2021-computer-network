@@ -42,8 +42,10 @@ public class EthernetLayer extends BaseLayer {
 				Header.mac_dst = Arrays.copyOf(UpperHeader.mac_dst,6); // 수신지 맥주소는 인계받음
 				break;
 			}
-			System.out.println("Ether");
+			System.out.println("ARP Send Packet");
 			System.out.println(Header.frame_type);
+			System.out.println(MacToStr(Header.mac_src) + " -> " + MacToStr(Header.mac_dst));
+			
 			this.GetUnderLayer(0).Send(ObjToByte(Header));
 			return true;
 		}

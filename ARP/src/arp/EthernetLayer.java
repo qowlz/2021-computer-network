@@ -69,6 +69,7 @@ public class EthernetLayer extends BaseLayer {
 				this.GetUpperLayer(0).Receive(Header.data);
 				return true;
 			}else if(Header.frame_type == 0x0800) { // IP 타입이면
+				System.out.println("이더넷 IP 받음");
 				this.GetUpperLayer(1).Receive(Header.data);
 				return true;
 			}

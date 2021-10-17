@@ -67,10 +67,13 @@ public class IPLayer extends BaseLayer {
 			byte[] b = ObjToByte(Header);
 			ARP.Send(Arrays.copyOf(b, b.length)); // ARP로 보냄
 		}else { // 목적지 ip의 mac주소가 있으면
-			System.out.println(IpToStr(cache.ip));
+			System.out.println(IpToStr(cache.ip) + "패ㅣㅅ 전송");
 			EthernetLayer Ethernet = (EthernetLayer)GetUnderLayer(1);
 			Ethernet.Header.mac_dst = Arrays.copyOf(cache.mac,cache.mac.length); // 맥주소 지정하고
 			Ethernet.Header.frame_type = 0x0800; // type 지정하고
+			
+			Header.ip_dst = cache.ip;
+
 			byte[] b = ObjToByte(Header);
 			Ethernet.Send(Arrays.copyOf(b, b.length)); // Ethernet으로 보냄
 		}
@@ -90,7 +93,8 @@ public class IPLayer extends BaseLayer {
 		Header = ByteToObj(input, IP_HEADER.class);		
 		
 		if (Arrays.equals(Header.ip_dst, ipAddress)) { // 자기 ip면 전달
-			GetUpperLayer(0).Send(Header.data);
+			System.out.println("IP에서 받음");
+			GetUpperLayer(0).Receive(Header.data);
 			return true;
 		}
 		return false;

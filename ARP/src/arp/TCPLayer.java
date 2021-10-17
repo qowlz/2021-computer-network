@@ -22,13 +22,15 @@ public class TCPLayer extends BaseLayer {
 	public boolean Receive(byte[] input) {		
 		
 		Header = ByteToObj(input, TCP_HEADER.class);
+		System.out.println(Header.port_dst);
 		switch (Header.port_dst) {
 		case 0x2090:
-			GetUpperLayer(0).Send(Header.data);
+			System.out.println("채팅 받음");
+			GetUpperLayer(0).Receive(Header.data);
 			return true;
 			
 		case 0x2091:
-			GetUpperLayer(1).Send(Header.data);
+			GetUpperLayer(1).Receive(Header.data);
 			return true;
 		}
 		return false;

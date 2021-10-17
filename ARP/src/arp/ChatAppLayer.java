@@ -44,7 +44,7 @@ public class ChatAppLayer extends BaseLayer{
         Header.capp_data = bytes;
 
     	TCPLayer TCP = (TCPLayer) GetUnderLayer(0);
- 
+    	TCP.Header.port_dst = 0x2090;
     	TCP.Header.port_src = 0x2090;
     	TCP.Send(ObjToByte(Header));
 
@@ -59,7 +59,7 @@ public class ChatAppLayer extends BaseLayer{
         		Header.capp_type = (byte) (0x03);
         	System.arraycopy(input, 1456 * i, bytes, 0, 1456);
         	Header.capp_data = bytes;
-
+        	TCP.Header.port_dst = 0x2090;
         	TCP.Header.port_src = 0x2090;
         	TCP.Send(ObjToByte(Header));
         }
@@ -72,7 +72,7 @@ public class ChatAppLayer extends BaseLayer{
             System.arraycopy(input, length - (length % 1456), bytes, 0, length % 1456);
             Header.capp_data = bytes;
             
-            
+        	TCP.Header.port_dst = 0x2090;
         	TCP.Header.port_src = 0x2090;
         	TCP.Send(ObjToByte(Header));
         	
@@ -93,6 +93,8 @@ public class ChatAppLayer extends BaseLayer{
         else {
         	TCPLayer TCP = (TCPLayer) GetUnderLayer(0);
         	TCP.Header.port_src = 0x2090;
+        	TCP.Header.port_dst = 0x2090;
+        	
         	TCP.Send(ObjToByte(Header));
         } 
         return true;

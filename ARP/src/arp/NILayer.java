@@ -17,8 +17,14 @@ public class NILayer extends BaseLayer {
 
 	public NILayer(String pName) {
 		pLayerName = pName;	
-		
+
 		int r = Pcap.findAllDevs(allDevs, errbuf);
+		
+		for(PcapIf device : allDevs) {	// 탐색한 장비를 출력
+			String description = (device.getDescription() != null) ?
+					device.getDescription() : "장비에 대한 설명이 없습니다.";
+			System.out.printf("%s [%s]\n", device.getName(), description);		
+		}
 		
 		if (r == Pcap.NOT_OK || allDevs.isEmpty()) {
 			System.out.println("네트워크 어뎁터가 없습니다.");
@@ -27,12 +33,13 @@ public class NILayer extends BaseLayer {
 	}
 	
 	public boolean setDevice(int idx, int snaplen, int flags, int timeout) {
+		
 		PcapIf device = allDevs.get(idx);
 		pcap = Pcap.openLive(device.getName(), snaplen, flags, timeout, errbuf);
 		try {
 			macAddress = device.getHardwareAddress();
 			ipAddress = device.getAddresses().get(0).getAddr().getData();
-			System.out.println(MacToStr(macAddress));
+			
 		} catch (IOException e) { System.out.println("주소를 찾을 수 없습니다."); }
 
 		if (pcap == null) {
@@ -84,12 +91,12 @@ class Receive_Thread implements Runnable {
 			PcapPacketHandler<String> pph = new PcapPacketHandler<String>() {
 				public void nextPacket(PcapPacket packet, String user) {
 					data = packet.getByteArray(0, packet.size());
-					
 					UpperLayer.Receive(data);
 				}
 			};
 
-			adapter.loop(100000, pph, "");
+		  adapter.loop(10, pph, "jNetPcap rocks!"); 
+
 		}
 	}
 }

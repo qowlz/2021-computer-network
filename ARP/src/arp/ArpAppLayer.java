@@ -16,9 +16,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
@@ -26,11 +24,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
 import org.jnetpcap.Pcap;
-
-import arp.ARPLayer.ARPCache;
-import arp.ARPLayer.Proxy;
-import arp.BaseLayer.ARP_HEADER;
-import arp.ChatFileDlg.setAddressListener;
 
 public class ArpAppLayer extends BaseLayer{
 	
@@ -57,42 +50,10 @@ public class ArpAppLayer extends BaseLayer{
 	// proxy window
 	private JTextField proxyEntryIp;
 	private JTextField proxyEntryMac;
-
-	private static LayerManager m_LayerMgr = new LayerManager();
 	
 	static int adapterNumber = 0;
 	
-	public static void main(String[] args) throws IOException {
-	
-		NILayer niLayer = new NILayer("NI");
-		EthernetLayer ethernetLayer = new EthernetLayer("Ethernet");
-		ARPLayer arpLayer = new ARPLayer("ARP");
-		IPLayer ipLayer = new IPLayer("IP");
-		TCPLayer tcpLayer = new TCPLayer("TCP");
-		ArpAppLayer arpAppLayer = new ArpAppLayer("GUI");
-		
-		
-		m_LayerMgr.AddLayer(niLayer);
-		m_LayerMgr.AddLayer(ethernetLayer);
-		m_LayerMgr.AddLayer(arpLayer);
-		m_LayerMgr.AddLayer(ipLayer);
-		m_LayerMgr.AddLayer(tcpLayer);
-		m_LayerMgr.AddLayer(arpAppLayer);
-
-		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *IP ( *TCP ( *GUI ) ) ) ) )");
-		
-		arpLayer.setArpAppLayer(arpAppLayer);
-		ipLayer.Header.ip_src = ipAddress;
-		arpLayer.Header.ip_src = ipAddress;
-		arpLayer.Header.mac_src = macAddress;
-		
-		niLayer.setDevice(0, 64 * 1024, Pcap.MODE_PROMISCUOUS, 10 * 1000);
-		niLayer.Receive();
-		
-	}
-	
-	
-	public ArpAppLayer(String pName) throws IOException {
+	public ArpAppLayer(String pName) {
 		pLayerName = pName;
 		jframe = new JFrame();
 		
@@ -260,7 +221,7 @@ public class ArpAppLayer extends BaseLayer{
 					}
 					byte[] byteIp = ip.getAddress();
 					
-					byte[] byteMac = macStringToByte(inputMac);
+					byte[] byteMac = StrToMac(inputMac);
 					ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
 					
 					arpLayer.addProxy(byteIp, byteMac);
@@ -295,13 +256,13 @@ public class ArpAppLayer extends BaseLayer{
 				try {
 					ip = InetAddress.getByName(inputIP);
 					byte[] dstIP = ip.getAddress();
-					
-					ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-					arpLayer.Header.ip_dst = Arrays.copyOf(dstIP, 4);
-								
-					TCPLayer tcpLayer = (TCPLayer)m_LayerMgr.GetLayer("TCP");
-					tcpLayer.Send(new byte[0]);
-					
+
+					IPLayer IP = (IPLayer)m_LayerMgr.GetLayer("IP");
+
+					IP.Header.ip_dst = Arrays.copyOf(dstIP, 4);
+
+					Send(new byte[0]);
+
 					//arpLayer.Send(new byte[0], 0);
 					
 				} catch (UnknownHostException e1) {
@@ -369,13 +330,15 @@ public class ArpAppLayer extends BaseLayer{
 			/*----- GARP Action -----*/
 			else if(e.getSource() == GARPSend) {
 				//GARP Send버튼을 눌렀을 때
-				byte[] mac = macStringToByte(GARPTextField.getText());
-				
-				ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-				BaseLayer.macAddress = mac;
-				arpLayer.Header.ip_dst = ipAddress;
+				byte[] mac = StrToMac(GARPTextField.getText());
 				
 				TCPLayer tcpLayer = (TCPLayer)m_LayerMgr.GetLayer("TCP");
+				IPLayer ipLayer = (IPLayer)m_LayerMgr.GetLayer("IP");
+				
+				BaseLayer.macAddress = mac; // 자신의 mac 주소 변경
+
+				ipLayer.Header.ip_dst = ipAddress;
+				
 				tcpLayer.Send(new byte[0]);
 				
 				//arpLayer.Send(new byte[0], 0);
@@ -384,51 +347,7 @@ public class ArpAppLayer extends BaseLayer{
 		}
 	}
 	
-	public String macByteToString(byte[] byte_MacAddress) { //MAC Byte주소를 String으로 변환
-		String MacAddress = "";
-		for (int i = 0; i < 6; i++) { 
-			//2자리 16진수를 대문자로, 그리고 1자리 16진수는 앞에 0을 붙임.
-			MacAddress += String.format("%02X%s", byte_MacAddress[i], (i < MacAddress.length() - 1) ? "" : "");
-			
-			if (i != 5) {
-				//2자리 16진수 자리 단위 뒤에 "-"붙여주기
-				MacAddress += ":";
-			}
-		}
-		return MacAddress;
-	}
-
-	public byte[] macStringToByte(String mac) {
-		// string mac 주소는 "00:00:00:00:00:00" 형태
-		byte[] ret = new byte[6];
-
-		StringTokenizer tokens = new StringTokenizer(mac, ":");
-
-		for (int i = 0; tokens.hasMoreElements(); i++) {
-
-			String temp = tokens.nextToken();
-
-			try {
-				ret[i] = Byte.parseByte(temp, 16);
-			} catch (NumberFormatException e) {
-				int minus = (Integer.parseInt(temp, 16)) - 256;
-				ret[i] = (byte) (minus);
-			}
-		}
-
-		return ret;
-	}
-	
-	public String ipByteToString(byte[] stringIP) {
-		String result = "";
-		for(byte raw : stringIP){
-			result += raw & 0xFF;
-			result += ".";
-		}
-		return result.substring(0, result.length()-1);		
-	}
-	
-	public void updateARPCacheTable(ArrayList<ARPCache> cache_table) {
+	public void updateARPCacheTable(ArrayList<ARP_CACHE> cache_table) {
 		// GUI에 cache table 업데이트
 		//ip주소를 string으로 변환 필요
 		//mac주소를 string으로 변환 필요
@@ -442,18 +361,18 @@ public class ArpAppLayer extends BaseLayer{
 		}
 		
 		//cache_table의 모든 행 추가
-		Iterator<ARPCache> iter = cache_table.iterator();
+		Iterator<ARP_CACHE> iter = cache_table.iterator();
     	while(iter.hasNext()) {
-    		ARPCache cache = iter.next();
+    		ARP_CACHE cache = iter.next();
     		String[] row = new String[3];
     		
-    		row[0] = ipByteToString(cache.ip);
+    		row[0] = IpToStr(cache.ip);
     		if(cache.status == false) {
     			row[1] = "??????????";
     			row[2] = "incomplete";
     		}
     		else {
-    			row[1] = macByteToString(cache.mac);
+    			row[1] = MacToStr(cache.mac);
     			row[2] = "complete";
     		}
     		
@@ -475,8 +394,8 @@ public class ArpAppLayer extends BaseLayer{
     		Proxy proxy = iter.next();
     		String[] row = new String[2];
     		
-    		row[0] = ipByteToString(proxy.ip);
-    		row[1] = macByteToString(proxy.mac);
+    		row[0] = IpToStr(proxy.ip);
+    		row[1] = MacToStr(proxy.mac);
     		
     		proxyModel.addRow(row);
     	}

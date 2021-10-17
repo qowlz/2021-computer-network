@@ -1,17 +1,13 @@
 package arp;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 public abstract class BaseLayer {
 	public static class ETHERNET_HEADER {
@@ -58,17 +54,45 @@ public abstract class BaseLayer {
 		byte[] data = null;
 	}
 	
+	public static class CHAT_HEADER {
+        short capp_totlen = 0;
+        byte capp_type = 0x00;
+        byte capp_unused = 0x00;
+        byte[] capp_data = null;
+    }
+	
+    public class ARP_CACHE{
+    	// ip雅뚯눘�꺖, mac雅뚯눘�꺖, status
+    	public byte[] ip = new byte[4];
+    	public byte[] mac = new byte[6];
+    	public boolean status;
+    	
+    	public ARP_CACHE(byte[] ipAddress, byte[] macAddress, boolean status) {
+    		this.ip = ipAddress;
+    		this.mac = macAddress;
+    		this.status = status;
+    	}
+    }
+    
+    public class Proxy{
+    	public byte[] ip = new byte[4];
+    	public byte[] mac = new byte[6];
+    	
+    	public Proxy(byte[] ip, byte[] mac) {
+    		this.ip = ip;
+    		this.mac = mac;
+    	}
+    }
+    
 	public static byte[] macAddress = new byte[6];
 	public static byte[] ipAddress = new byte[4];
 	
-	public final int m_nUpperLayerCount = 0;
-	public final String m_pLayerName = null;
-	public final BaseLayer mp_UnderLayer = null;
-	public final ArrayList<BaseLayer> mp_aUpperLayer = new ArrayList<BaseLayer>();
-	
 	public int nUpperLayerCount = 0;
-	public BaseLayer p_UnderLayer = null;
+	public int nUnderLayerCount = 0;
+	
+	public ArrayList<BaseLayer> p_aUnderLayer = new ArrayList<BaseLayer>();
 	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
+	public static LayerManager m_LayerMgr = new LayerManager();
 	
 	public String pLayerName = null;
 	
@@ -76,10 +100,10 @@ public abstract class BaseLayer {
 		return pLayerName;
 	}
 
-	public BaseLayer GetUnderLayer() {
-		if (p_UnderLayer == null)
+	public BaseLayer GetUnderLayer(int nindex) {
+		if (nindex < 0 || nindex > nUnderLayerCount || nUnderLayerCount < 0)
 			return null;
-		return p_UnderLayer;
+		return p_aUnderLayer.get(nindex);
 	}
 
 	public BaseLayer GetUpperLayer(int nindex) {
@@ -91,7 +115,7 @@ public abstract class BaseLayer {
 	public void SetUnderLayer(BaseLayer pUnderLayer) {
 		if (pUnderLayer == null)
 			return;
-		this.p_UnderLayer = pUnderLayer;
+		this.p_aUnderLayer.add(nUnderLayerCount++, pUnderLayer);
 	}
 
 	public void SetUpperLayer(BaseLayer pUpperLayer) {
@@ -106,33 +130,15 @@ public abstract class BaseLayer {
 	}
 
 	public boolean Send(byte[] input) {
-		this.GetUnderLayer().Send(input);
+		this.GetUnderLayer(0).Send(input);
 		return false;
 	}
 
 	public boolean Receive(byte[] input) {
+
 		this.GetUpperLayer(0).Receive(input);
 		return false;
 	}
-
-	
-	public static String MacToStr(final byte[] mac) {
-		final StringBuilder buf = new StringBuilder();
-		for (byte b : mac) {
-			if (buf.length() != 0) buf.append(":");	
-			buf.append(Integer.toHexString((b < 0) ? b + 256 : b).toUpperCase());		
-		}
-		return buf.toString();
-	}
-	
-	public static boolean isBroadcast(byte[] addr) {
-
-		for (byte val : addr) {
-			if (val != (byte)0xFF) return false;
-		}
-		return true;
-	}
-
 	
 	public static byte[] ObjToByte(Object obj) {
 
@@ -216,6 +222,61 @@ public abstract class BaseLayer {
 	    return type.cast(obj);
 	}
 	
+	public static String MacToStr(byte[] mac) {
+		final StringBuilder buf = new StringBuilder();
+		for (byte b : mac) {
+			if (buf.length() != 0) buf.append(":");	
+			buf.append(Integer.toHexString((b < 0) ? b + 256 : b).toUpperCase());		
+		}
+		return buf.toString();
+	}
+	
+	public static byte[] StrToMac(String mac) {
+		byte[] ret = new byte[6];
+		StringTokenizer tokens = new StringTokenizer(mac, ":");
+		for (int i = 0; tokens.hasMoreElements(); i++) {
+			String temp = tokens.nextToken();
+			try {
+				ret[i] = Byte.parseByte(temp, 16);
+			} catch (NumberFormatException e) {
+				int minus = (Integer.parseInt(temp, 16)) - 256;
+				ret[i] = (byte) (minus);
+			}
+		}
+		return ret;
+	}
+	
+	public static byte[] StrToIp(String ip) {
+		byte[] ret = new byte[4];
+		StringTokenizer tokens = new StringTokenizer(ip, ".");
+		for (int i = 0; tokens.hasMoreElements(); i++) {
+			String temp = tokens.nextToken();
+			try {
+				ret[i] = Byte.parseByte(temp, 16);
+			} catch (NumberFormatException e) {
+				int minus = (Integer.parseInt(temp, 16)) - 256;
+				ret[i] = (byte) (minus);
+			}
+		}
+		return ret;
+	}
+
+	public static boolean isBroadcast(byte[] addr) {
+
+		for (byte val : addr) {
+			if (val != (byte)0xFF) return false;
+		}
+		return true;
+	}
+
+	public static String IpToStr(byte[] stringIP) {
+		String result = "";
+		for(byte raw : stringIP){
+			result += raw & 0xFF;
+			result += ".";
+		}
+		return result.substring(0, result.length()-1);		
+	}
     public static byte[] intToByte2(int value) {
         byte[] temp = new byte[2];
         temp[0] |= (byte) ((value & 0xFF00) >> 8);

@@ -5,8 +5,8 @@ import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -16,9 +16,9 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JProgressBar;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
@@ -29,6 +29,14 @@ import org.jnetpcap.PcapIf;
 
 public class ChatFileDlg extends BaseLayer {
 
+	public int nUpperLayerCount = 0;
+	public String pLayerName = null;
+	public BaseLayer p_UnderLayer = null;
+	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
+	BaseLayer UnderLayer;
+
+	private static LayerManager m_LayerMgr = new LayerManager();
+
 	private JTextField ChattingWrite;
 
 	JFrame jframe;
@@ -36,8 +44,8 @@ public class ChatFileDlg extends BaseLayer {
 	Container contentPane;
 
 	JTextArea ChattingArea; //梨쀭똿�솕硫� 蹂댁뿬二쇰뒗 �쐞移�
-	JTextArea srcIpAddress;
-	JTextArea dstIpAddress;
+	JTextArea srcMacAddress;
+	JTextArea dstMacAddress;
 
 	JLabel lblsrc;  // Label(�씠由�)
 	JLabel lbldst;
@@ -59,28 +67,18 @@ public class ChatFileDlg extends BaseLayer {
 	int adapterNumber = 0;
 
 	String Text;
-	
+
 	public static void main(String[] args) {
 	
-//		/*과제
-//		// 흐름대로 레이어 연결해주는 부분.. 
-//		과제  */
-
+		//怨쇱젣
+		// �쓲由꾨�濡� �젅�씠�뼱 �뿰寃고빐二쇰뒗 遺�遺�.. 
+		//怨쇱젣  
 		m_LayerMgr.AddLayer(new NILayer("NI"));
 		m_LayerMgr.AddLayer(new EthernetLayer("Ethernet"));
 		m_LayerMgr.AddLayer(new ARPLayer("ARP"));
-		m_LayerMgr.AddLayer(new ArpAppLayer("ARPGUI"));
-		m_LayerMgr.AddLayer(new IPLayer("IP"));
-		m_LayerMgr.AddLayer(new TCPLayer("TCP"));
-		m_LayerMgr.AddLayer(new ChatFileDlg("ChatFileGUI"));
-		m_LayerMgr.AddLayer(new FileAppLayer("File"));
-		m_LayerMgr.AddLayer(new ChatAppLayer("Chat"));
-		
-		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *IP ( *TCP ( *Chat ( *ChatFileGUI ) *File ( +ChatFileGUI ) *ARPGUI ) ) ) *IP ) )");
+		m_LayerMgr.AddLayer(new ChatFileDlg("GUI"));
 
-		ARPLayer ARP = (ARPLayer) m_LayerMgr.GetLayer("ARP");
-		ARP.appLayer = (ArpAppLayer) m_LayerMgr.GetLayer("ARPGUI");
-				
+		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *GUI ) )");
 	}
 
 	public ChatFileDlg(String pName) {
@@ -136,14 +134,13 @@ public class ChatFileDlg extends BaseLayer {
 		settingPanel.add(sourceAddressPanel);
 		sourceAddressPanel.setLayout(null);
 
-		lblsrc = new JLabel("Source IP Address");
+		lblsrc = new JLabel("Source Mac Address");
 		lblsrc.setBounds(10, 115, 170, 20); //�쐞移� 吏��젙
 		settingPanel.add(lblsrc); //panel 異붽�
 
-		srcIpAddress = new JTextArea();
-		srcIpAddress.setBounds(2, 2, 170, 20); 
-		srcIpAddress.setEditable(false);
-		sourceAddressPanel.add(srcIpAddress);// src address
+		srcMacAddress = new JTextArea();
+		srcMacAddress.setBounds(2, 2, 170, 20); 
+		sourceAddressPanel.add(srcMacAddress);// src address
 
 		JPanel destinationAddressPanel = new JPanel();
 		destinationAddressPanel.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
@@ -151,13 +148,13 @@ public class ChatFileDlg extends BaseLayer {
 		settingPanel.add(destinationAddressPanel);
 		destinationAddressPanel.setLayout(null);
 
-		lbldst = new JLabel("Destination IP Address");
+		lbldst = new JLabel("Destination Mac Address");
 		lbldst.setBounds(10, 187, 190, 20);
 		settingPanel.add(lbldst);
 
-		dstIpAddress = new JTextArea();
-		dstIpAddress.setBounds(2, 2, 170, 20);
-		destinationAddressPanel.add(dstIpAddress);// dst address
+		dstMacAddress = new JTextArea();
+		dstMacAddress.setBounds(2, 2, 170, 20);
+		destinationAddressPanel.add(dstMacAddress);// dst address
 
 		JLabel NICLabel = new JLabel("NIC List");
 		NICLabel.setBounds(10, 20, 170, 20);
@@ -167,11 +164,12 @@ public class ChatFileDlg extends BaseLayer {
 		NICComboBox.setBounds(10, 49, 170, 20);
 		settingPanel.add(NICComboBox);
 		
-		NILayer NI = (NILayer) m_LayerMgr.GetLayer("NI"); //肄ㅻ낫諛뺤뒪 由ъ뒪�듃�뿉 異붽��븯湲� �쐞�븳 �씤�꽣�럹�씠�뒪 媛앹껜
 		
-		for (int i = 0; i < NI.getAdapterList().size(); i++) { //�꽕�듃�썙�겕 �씤�꽣�럹�씠�뒪媛� ���옣�맂 �뼱�럞�꽣 由ъ뒪�듃�쓽 �궗�씠利덈쭔�겮�쓽 諛곗뿴 �깮�꽦
+		NILayer tempNiLayer = (NILayer) m_LayerMgr.GetLayer("NI"); //肄ㅻ낫諛뺤뒪 由ъ뒪�듃�뿉 異붽��븯湲� �쐞�븳 �씤�꽣�럹�씠�뒪 媛앹껜
+
+		for (int i = 0; i < tempNiLayer.getAdapterList().size(); i++) { //�꽕�듃�썙�겕 �씤�꽣�럹�씠�뒪媛� ���옣�맂 �뼱�럞�꽣 由ъ뒪�듃�쓽 �궗�씠利덈쭔�겮�쓽 諛곗뿴 �깮�꽦
 			//NICComboBox.addItem(((NILayer) m_LayerMgr.GetLayer("NI")).GetAdapterObject(i).getDescription());
-			PcapIf pcapIf = NI.GetAdapterObject(i); //
+			PcapIf pcapIf = tempNiLayer.GetAdapterObject(i); //
 			NICComboBox.addItem(pcapIf.getName()); // NIC �꽑�깮 李쎌뿉 �뼱�뙌�꽣瑜� 蹂댁뿬以�
 		}
 
@@ -183,13 +181,26 @@ public class ChatFileDlg extends BaseLayer {
 				//adapterNumber = NICComboBox.getSelectedIndex();
 				JComboBox jcombo = (JComboBox) e.getSource();
 				adapterNumber = jcombo.getSelectedIndex();
-				
-				NI.setDevice(adapterNumber, 64 * 1024, Pcap.MODE_PROMISCUOUS, 10 * 1000);
-
-				srcIpAddress.setText(IpToStr(ipAddress));
-				
+				System.out.println("Index: " + adapterNumber); 
+				try {
+					srcMacAddress.setText("");
+					srcMacAddress.append(get_MacAddress(((NILayer) m_LayerMgr.GetLayer("NI")).GetAdapterObject(adapterNumber).getHardwareAddress()));
+					
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 		});
+
+		try {// ���젅濡� MAC二쇱냼 蹂댁씠寃뚰븯湲�
+			srcMacAddress.append(get_MacAddress(
+					((NILayer) m_LayerMgr.GetLayer("NI")).GetAdapterObject(adapterNumber).getHardwareAddress()));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		;
 
 		Setting_Button = new JButton("Setting");// setting
 		Setting_Button.setBounds(80, 270, 100, 20);
@@ -246,22 +257,43 @@ public class ChatFileDlg extends BaseLayer {
 			if (e.getSource() == Setting_Button) { //setting 踰꾪듉 �늻瑜� �떆
 
 				if (Setting_Button.getText() == "Reset") { //reset �닃�젮議뚯쓣 寃쎌슦,
-					srcIpAddress.setText("");  //二쇱냼 怨듬갚�쑝濡� 諛붾��
-					dstIpAddress.setText("");  //二쇱냼 怨듬갚�쑝濡� 諛붾��
-
+					srcMacAddress.setText("");  //二쇱냼 怨듬갚�쑝濡� 諛붾��
+					dstMacAddress.setText("");  //二쇱냼 怨듬갚�쑝濡� 諛붾��
 					Setting_Button.setText("Setting"); //踰꾪듉�쓣 �늻瑜대㈃, setting�쑝濡� 諛붾��
-					srcIpAddress.setEnabled(true);  //踰꾪듉�쓣 �솢�꽦�솕�떆�궡
-					dstIpAddress.setEnabled(true);  //踰꾪듉�쓣 �솢�꽦�솕�떆�궡
-					
+					srcMacAddress.setEnabled(true);  //踰꾪듉�쓣 �솢�꽦�솕�떆�궡
+					dstMacAddress.setEnabled(true);  //踰꾪듉�쓣 �솢�꽦�솕�떆�궡
 				}  
 				else { //�넚�닔�떊二쇱냼 �꽕�젙
+					 
+					byte[] srcAddress = new byte[6];
+					byte[] dstAddress = new byte[6];
 
-					NILayer NI = (NILayer) m_LayerMgr.GetLayer("NI");
-					NI.Receive();
+					String src = srcMacAddress.getText(); //MAC 二쇱냼瑜� String byte濡� 蹂��솚
+					String dst = dstMacAddress.getText();
+
+					String[] byte_src = src.split("-"); //Sting MAC 二쇱냼瑜�"-"濡� �굹�닎
+					for (int i = 0; i < 6; i++) {
+						srcAddress[i] = (byte) Integer.parseInt(byte_src[i], 16); //16鍮꾪듃 (2byte)
+					}
+
+					String[] byte_dst = dst.split("-");//Sting MAC 二쇱냼瑜�"-"濡� �굹�닎
+					for (int i = 0; i < 6; i++) {
+						dstAddress[i] = (byte) Integer.parseInt(byte_dst[i], 16);//16鍮꾪듃 (2byte)
+					}
+
+					//((EthernetLayer) m_LayerMgr.GetLayer("Ethernet")).SetEnetSrcAddress(srcAddress); //�씠遺�遺꾩쓣 �넻�빐 �꽑�깮�븳 二쇱냼瑜� �봽濡쒓렇�옩 �긽 �냼�뒪二쇱냼濡� �궗�슜媛��뒫
+					//((EthernetLayer) m_LayerMgr.GetLayer("Ethernet")).SetEnetDstAddress(dstAddress); //�씠遺�遺꾩쓣 �넻�빐 �꽑�깮�븳 二쇱냼瑜� �봽濡쒓렇�옩 �긽 紐⑹쟻吏�二쇱냼濡� �궗�슜媛��뒫
+					
+					((EthernetLayer) m_LayerMgr.GetLayer("Ethernet")).Header.mac_src = srcAddress;
+					((EthernetLayer) m_LayerMgr.GetLayer("Ethernet")).Header.mac_dst = dstAddress;
+					
+					((NILayer) m_LayerMgr.GetLayer("NI")).setDevice(adapterNumber, 64 * 1024, Pcap.MODE_PROMISCUOUS, 10 * 1000);
+					((NILayer) m_LayerMgr.GetLayer("NI")).Receive();
+					
 
 					Setting_Button.setText("Reset"); //setting 踰꾪듉 �늻瑜대㈃ 由ъ뀑�쑝濡� 諛붾��
-					srcIpAddress.setEnabled(false);  //踰꾪듉�쓣 鍮꾪솢�꽦�솕�떆�궡
-					dstIpAddress.setEnabled(false);  //踰꾪듉�쓣 鍮꾪솢�꽦�솕�떆�궡  
+					dstMacAddress.setEnabled(false);  //踰꾪듉�쓣 鍮꾪솢�꽦�솕�떆�궡
+					srcMacAddress.setEnabled(false);  //踰꾪듉�쓣 鍮꾪솢�꽦�솕�떆�궡  
 				} 
 			}
 
@@ -270,10 +302,8 @@ public class ChatFileDlg extends BaseLayer {
 					String input = ChattingWrite.getText(); //梨꾪똿李쎌뿉 �엯�젰�맂 �뀓�뒪�듃瑜� ���옣
 					ChattingArea.append("[SEND] : " + input + "\n"); //�꽦怨듯븯硫� �엯�젰媛� 異쒕젰
 					byte[] bytes = input.getBytes(); //�엯�젰�맂 硫붿떆吏�瑜� 諛붿씠�듃濡� ���옣
-					IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
 					
-					IP.Header.ip_dst = StrToIp(dstIpAddress.getText());
-					((ChatAppLayer)m_LayerMgr.GetLayer("ChatApp")).Send(bytes);
+					((ChatAppLayer)m_LayerMgr.GetLayer("ChatApp")).Send(bytes, bytes.length);
 					//梨꾪똿李쎌뿉 �엯�젰�맂 硫붿떆吏�瑜� chatApplayer濡� 蹂대깂
 					ChattingWrite.setText(""); 
 					//梨꾪똿 �엯�젰�� �떎�떆 鍮꾩썙以�
@@ -295,9 +325,6 @@ public class ChatFileDlg extends BaseLayer {
 			}
 			
 			if(e.getSource() == FileSendButton){
-				IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));			
-				IP.Header.ip_dst = StrToIp(dstIpAddress.getText());
-				
 				FileAppLayer FAlayer = (FileAppLayer)m_LayerMgr.GetLayer("FileApp");
 				File_Send_Thread FST = new File_Send_Thread(FAlayer);
 				Thread Send_Thread = new Thread(FST);
@@ -322,6 +349,21 @@ public class ChatFileDlg extends BaseLayer {
 		
 		
 	}
+	public String get_MacAddress(byte[] byte_MacAddress) { //MAC Byte二쇱냼瑜� String�쑝濡� 蹂��솚
+
+		String MacAddress = "";
+		for (int i = 0; i < 6; i++) { 
+			//2�옄由� 16吏꾩닔瑜� ��臾몄옄濡�, 洹몃━怨� 1�옄由� 16吏꾩닔�뒗 �븵�뿉 0�쓣 遺숈엫.
+			MacAddress += String.format("%02X%s", byte_MacAddress[i], (i < MacAddress.length() - 1) ? "" : "");
+			
+			if (i != 5) {
+				//2�옄由� 16吏꾩닔 �옄由� �떒�쐞 �뮘�뿉 "-"遺숈뿬二쇨린
+				MacAddress += "-";
+			}
+		} 
+		System.out.println("mac_address:" + MacAddress);
+		return MacAddress;
+	}
 
 	public boolean Receive(byte[] input) { //硫붿떆吏� Receive
 		if (input != null) {
@@ -333,6 +375,51 @@ public class ChatFileDlg extends BaseLayer {
 		return false ;
 	}
 
+	@Override
+	public void SetUnderLayer(BaseLayer pUnderLayer) {
+		// TODO Auto-generated method stub
+		if (pUnderLayer == null)
+			return;
+		this.p_UnderLayer = pUnderLayer;
+	}
+
+	@Override
+	public void SetUpperLayer(BaseLayer pUpperLayer) {
+		// TODO Auto-generated method stub
+		if (pUpperLayer == null)
+			return;
+		this.p_aUpperLayer.add(nUpperLayerCount++, pUpperLayer);
+		// nUpperLayerCount++;
+	}
+
+	@Override
+	public String GetLayerName() {
+		// TODO Auto-generated method stub
+		return pLayerName;
+	}
+
+	@Override
+	public BaseLayer GetUnderLayer() {
+		// TODO Auto-generated method stub
+		if (p_UnderLayer == null)
+			return null;
+		return p_UnderLayer;
+	}
+
+	@Override
+	public BaseLayer GetUpperLayer(int nindex) {
+		// TODO Auto-generated method stub
+		if (nindex < 0 || nindex > nUpperLayerCount || nUpperLayerCount < 0)
+			return null;
+		return p_aUpperLayer.get(nindex);
+	}
+
+	@Override
+	public void SetUpperUnderLayer(BaseLayer pUULayer) {
+		this.SetUpperLayer(pUULayer);
+		pUULayer.SetUnderLayer(this);
+
+	}
 
 	public File getFile() {
 		// TODO Auto-generated method stub

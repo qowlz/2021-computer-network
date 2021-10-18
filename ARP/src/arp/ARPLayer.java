@@ -109,7 +109,7 @@ public class ARPLayer extends BaseLayer{
 			
 			if(Arrays.equals(Header.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
 
-			new JOptionPane().showMessageDialog(null,"응답이 왔어요");
+			System.out.println("ARP 응답 수신");
 			// 수신
 			if(tempARP == null) { // 캐시테이블 미적중
 				ARP_CACHE arpCache = new ARP_CACHE(Header.ip_src, Header.mac_src, true);

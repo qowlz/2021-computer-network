@@ -30,9 +30,9 @@ public abstract class BaseLayer {
 		byte[] ip_dst = new byte[4];
 	}
 	public static class IP_HEADER {
-		byte ip_version = 0;
+		byte ip_version = 4;
 		byte tos = 0;
-		short len = 0;
+		short len = 5;
 		short id = 0;
 		short frag_offset = 0;
 		byte ttl = 0;

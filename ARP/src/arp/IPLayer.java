@@ -27,11 +27,14 @@ public class IPLayer extends BaseLayer {
             		ARP_CACHE cache = ARP.getCache(Packet.ip_dst);
             		
             		if (cache != null) {
-            			EthernetLayer Ethernet = (EthernetLayer)GetUnderLayer(0);
+            			EthernetLayer Ethernet = (EthernetLayer)GetUnderLayer(1);
             			Ethernet.Header.mac_dst = Arrays.copyOf(cache.mac,cache.mac.length); // 맥주소 지정하고
             			Ethernet.Header.frame_type = 0x0800; // type 지정하고
+            			Packet.ip_dst = cache.ip;
+            			Packet.ip_version = 4;
             			byte[] b = ObjToByte(Packet);
             			Ethernet.Send(Arrays.copyOf(b, b.length)); // Ethernet으로 보냄
+            			ARP.cacheRemove(cache.ip);
             		}
             	}
             	
@@ -46,6 +49,7 @@ public class IPLayer extends BaseLayer {
 	public boolean Send(byte[] input) {
 		
 		Header.ip_src = ipAddress;
+		Header.data = input;
 		
 		TCP_HEADER UpperHeader = ByteToObj(input, TCP_HEADER.class);
 		ARPLayer ARP = (ARPLayer)GetUnderLayer(0);
@@ -63,7 +67,7 @@ public class IPLayer extends BaseLayer {
 				packet_queue.add(Pacekt); // 불발된 패킷 큐에 넣기			
 				Header.data = new byte[0]; // data 삭제 -> 헤더만 보내기
 			}
-
+			System.out.println("ARP sd");
 			byte[] b = ObjToByte(Header);
 			ARP.Send(Arrays.copyOf(b, b.length)); // ARP로 보냄
 		}else { // 목적지 ip의 mac주소가 있으면
@@ -73,8 +77,10 @@ public class IPLayer extends BaseLayer {
 			Ethernet.Header.frame_type = 0x0800; // type 지정하고
 			
 			Header.ip_dst = cache.ip;
+			Header.ip_version = 4;
 
 			byte[] b = ObjToByte(Header);
+			
 			Ethernet.Send(Arrays.copyOf(b, b.length)); // Ethernet으로 보냄
 		}
 		
@@ -93,7 +99,8 @@ public class IPLayer extends BaseLayer {
 		Header = ByteToObj(input, IP_HEADER.class);		
 		
 		if (Arrays.equals(Header.ip_dst, ipAddress)) { // 자기 ip면 전달
-			System.out.println("IP에서 받음");
+			
+			System.out.println(IpToStr(Header.ip_src) + "-IP_RECV>" + IpToStr(Header.ip_dst) );
 			GetUpperLayer(0).Receive(Header.data);
 			return true;
 		}

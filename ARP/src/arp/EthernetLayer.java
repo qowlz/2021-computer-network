@@ -26,6 +26,14 @@ public class EthernetLayer extends BaseLayer {
 			System.out.println(Header.frame_type);
 			System.out.println(MacToStr(Header.mac_src) + " -> " + MacToStr(Header.mac_dst));
 			
+			IP_HEADER IPTEST = ByteToObj(input, IP_HEADER.class);
+			System.out.println("IP 볂롼");
+			TCP_HEADER test = ByteToObj(IPTEST.data,TCP_HEADER.class);
+			System.out.println(test.port_dst);
+			System.out.println(test.port_src);
+			this.GetUpperLayer(1).Receive(Header.data);
+			
+			
 			this.GetUnderLayer(0).Send(ObjToByte(Header));
 			return true;
 			
@@ -45,6 +53,10 @@ public class EthernetLayer extends BaseLayer {
 			System.out.println("ARP Send Packet");
 			System.out.println(Header.frame_type);
 			System.out.println(MacToStr(Header.mac_src) + " -> " + MacToStr(Header.mac_dst));
+			
+			
+
+			
 			
 			this.GetUnderLayer(0).Send(ObjToByte(Header));
 			return true;
@@ -69,7 +81,12 @@ public class EthernetLayer extends BaseLayer {
 				this.GetUpperLayer(0).Receive(Header.data);
 				return true;
 			}else if(Header.frame_type == 0x0800) { // IP 타입이면
-				System.out.println("이더넷 IP 받음");
+				
+				System.out.println(MacToStr(Header.mac_src) + " -ETHER RECV> " + MacToStr(Header.mac_dst));
+				System.out.println("이더넷 IP 받음" + GetUpperLayer(1).GetLayerName() + "으로 전송");
+				TCP_HEADER test = ByteToObj(ByteToObj(ByteToObj(input, ETHERNET_HEADER.class).data, IP_HEADER.class).data,TCP_HEADER.class);
+				System.out.println(test.port_dst);
+				System.out.println(test.port_src);
 				this.GetUpperLayer(1).Receive(Header.data);
 				return true;
 			}

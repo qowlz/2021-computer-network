@@ -4,7 +4,12 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -80,6 +85,24 @@ public class ChatFileDlg extends BaseLayer {
 
 		ARPLayer ARP = (ARPLayer) m_LayerMgr.GetLayer("ARP");
 		ARP.appLayer = (ArpAppLayer) m_LayerMgr.GetLayer("ARPGUI");
+		
+		
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		DataOutputStream out = new DataOutputStream(baos);
+    	short d = (short) -10621;
+    	try {
+			out.writeByte((byte)(d  >> 8));
+			out.writeByte((byte)(d));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	
+    	byte[] result = baos.toByteArray();
+    	
+    	for (byte b : result)
+    		System.out.println(b);
+    	
+    	System.out.println(ByteBuffer.wrap(result, 0, 2).order(ByteOrder.BIG_ENDIAN).getShort());
 				
 	}
 
@@ -273,9 +296,8 @@ public class ChatFileDlg extends BaseLayer {
 					IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
 					//arp.ChatAppLayer.Send(byte[])" because the return value of "arp.LayerManager.GetLayer(String)" is null
 					IP.Header.ip_dst = StrToIp(dstIpAddress.getText());
-					System.out.println("CFL" + bytes.length);
-	
-					((ChatAppLayer)GetUnderLayer(0)).Send(bytes, (short)bytes.length);
+
+					((ChatAppLayer)GetUnderLayer(0)).Send(bytes, (short)(bytes.length));
 					//梨꾪똿李쎌뿉 �엯�젰�맂 硫붿떆吏�瑜� chatApplayer濡� 蹂대깂
 					ChattingWrite.setText(""); 
 					//梨꾪똿 �엯�젰�� �떎�떆 鍮꾩썙以�
@@ -327,6 +349,7 @@ public class ChatFileDlg extends BaseLayer {
 
 	public boolean Receive(byte[] input) { //硫붿떆吏� Receive
 		if (input != null) {
+			System.out.println("CF app 에서 수신");
 			byte[] data = input;   //byte �떒�쐞�쓽 input data
 			Text = new String(data); //�븘�옒痢듭뿉�꽌 �삱�씪�삩 硫붿떆吏�瑜� String text濡� 蹂��솚�빐以�
 			ChattingArea.append("[RECV] : " + Text + "\n"); //梨꾪똿李쎌뿉 �닔�떊硫붿떆吏�瑜� 蹂댁뿬以�

@@ -12,12 +12,15 @@ public class TCPLayer extends BaseLayer {
 	
 	public boolean Send(byte[] input) {
 		Header.data = Arrays.copyOf(input, input.length);
+		Header.port_src = 0x2090;
+		Header.port_dst = 0x2090;
+		
 		byte[] b = ObjToByte(Header);
 		System.out.println("TCP send length" + Header.data.length);
 		GetUnderLayer(0).Send(Arrays.copyOf(b, b.length));
 		return true;
 	}
-	
+
 	@Override
 	public boolean Receive(byte[] input) {		
 		

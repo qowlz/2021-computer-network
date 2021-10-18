@@ -1,6 +1,7 @@
 package arp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import arp.BaseLayer.ARP_HEADER;
 import arp.BaseLayer.ETHERNET_HEADER;
@@ -85,7 +86,10 @@ public class ChatAppLayer extends BaseLayer{
         Header = ByteToObj(input, CHAT_HEADER.class);
         Header.capp_totlen = length;
         Header.capp_type = (byte) (0x00);
+        Header.capp_data = Arrays.copyOf(input, length);
 		
+        System.out.println("send length" + length);
+        
         //waitACK()
         if (length > 1456) {
         	fragSend(input, length);
@@ -94,7 +98,6 @@ public class ChatAppLayer extends BaseLayer{
         	TCPLayer TCP = (TCPLayer) GetUnderLayer(0);
         	TCP.Header.port_src = 0x2090;
         	TCP.Header.port_dst = 0x2090;
-        	
         	TCP.Send(ObjToByte(Header));
         } 
         return true;
@@ -110,6 +113,7 @@ public class ChatAppLayer extends BaseLayer{
         }
                 
         if(Header.capp_type == 0) {
+        	System.out.println("chat app에서 위로전달");
         	this.GetUpperLayer(0).Receive(Header.capp_data);
         }
         else{

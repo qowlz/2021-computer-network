@@ -117,6 +117,7 @@ public class ChatFileDlg extends BaseLayer {
 		ChattingArea.setEditable(false);
 		ChattingArea.setBounds(0, 0, 340, 210);
 		chattingEditorPanel.add(ChattingArea);// chatting edit
+		ChattingArea.setLineWrap(true);
 
 		JPanel chattingInputPanel = new JPanel();// chatting write panel
 		chattingInputPanel.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));

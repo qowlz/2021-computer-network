@@ -13,10 +13,9 @@ public class IPLayer extends BaseLayer {
 	
 	public IPLayer(String pName) {
 		pLayerName = pName;
-		queueTimer(1000);
 	}
 	
-    public void queueTimer(long time) {
+    public void RunTimerTask(long time) {
         Timer timer = new Timer();
         TimerTask task = new TimerTask() {
             @Override
@@ -48,10 +47,9 @@ public class IPLayer extends BaseLayer {
             	//}catch(Exception e) {
             	//	System.out.println(e.toString());
             	//}
-            	
             }
         };
-        timer.schedule(task, time, time); 
+        timer.schedule(task, 0, time);
     }
 	
     

@@ -83,6 +83,8 @@ public class ChatFileDlg extends BaseLayer {
 		
 		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *IP ( *TCP ( *Chat ( *ChatFileGUI ) *File ( *ChatFileGUI ) *ARPGUI ) ) ) *IP ) )");
 
+		((IPLayer)m_LayerMgr.GetLayer("IP")).RunTimerTask(1000);
+
 		ARPLayer ARP = (ARPLayer) m_LayerMgr.GetLayer("ARP");
 		ARP.appLayer = (ArpAppLayer) m_LayerMgr.GetLayer("ARPGUI");				
 	}
@@ -115,6 +117,7 @@ public class ChatFileDlg extends BaseLayer {
 		ChattingArea.setEditable(false);
 		ChattingArea.setBounds(0, 0, 340, 210);
 		chattingEditorPanel.add(ChattingArea);// chatting edit
+		ChattingArea.setLineWrap(true);
 
 		JPanel chattingInputPanel = new JPanel();// chatting write panel
 		chattingInputPanel.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
@@ -233,7 +236,7 @@ public class ChatFileDlg extends BaseLayer {
 		this.progressBar.setStringPainted(true);
 		FileTransferPanel.add(this.progressBar);
 
-		FileSendButton = new JButton("�쟾�넚");
+		FileSendButton = new JButton("Send");
 		FileSendButton.setEnabled(false);
 		FileSendButton.setBounds(270, 50, 80, 20);
 		FileSendButton.addActionListener(new setAddressListener());

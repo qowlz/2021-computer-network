@@ -14,20 +14,15 @@ public class EthernetLayer extends BaseLayer {
 	
 	@Override
 	public boolean Send(byte[] input) {	
-		System.out.println("Ether");
-		
+
 		Header.data = input; // 데이터 넣기 
 		Header.mac_src = Arrays.copyOf(macAddress,6); // 송신지 설정	
 		
-		
 		if (Header.frame_type == 0x0800) { // ip에서 날라온거
 			IP_HEADER UpperHeader = ByteToObj(input, IP_HEADER.class);
-			System.out.println("IP Send Packet");
 			System.out.println(Header.frame_type);
-			System.out.println(MacToStr(Header.mac_src) + " -> " + MacToStr(Header.mac_dst));
-			
+
 			IP_HEADER IPTEST = ByteToObj(input, IP_HEADER.class);
-			System.out.println("IP 볂롼");
 			TCP_HEADER test = ByteToObj(IPTEST.data,TCP_HEADER.class);
 			System.out.println(test.port_dst);
 			System.out.println(test.port_src);
@@ -50,13 +45,6 @@ public class EthernetLayer extends BaseLayer {
 				Header.mac_dst = Arrays.copyOf(UpperHeader.mac_dst,6); // 수신지 맥주소는 인계받음
 				break;
 			}
-			System.out.println("ARP Send Packet");
-			System.out.println(Header.frame_type);
-			System.out.println(MacToStr(Header.mac_src) + " -> " + MacToStr(Header.mac_dst));
-			
-			
-
-			
 			
 			this.GetUnderLayer(0).Send(ObjToByte(Header));
 			return true;
@@ -64,29 +52,21 @@ public class EthernetLayer extends BaseLayer {
 
 	}
 	
-	public synchronized boolean Receive(byte[] input) {
-
+	public boolean Receive(byte[] input) {
 
 		Header = ByteToObj(input, ETHERNET_HEADER.class);
 		
 		if (Arrays.equals(Header.mac_src, macAddress))
 			return false;
 		
-		System.out.println(MacToStr(Header.mac_src) + " -> " + MacToStr(Header.mac_dst));
+		System.out.println(MacToStr(Header.mac_src) + " -ETHER RECV> " + MacToStr(Header.mac_dst));
 		
 		if( (isBroadcast(Header.mac_dst) || Arrays.equals(Header.mac_dst, macAddress))) { // 수신지가 브로드캐스팅 이거나 나 일경우 수신
 			System.out.println(Header.frame_type);
 			if(Header.frame_type == 0x0806){ // arp 타입이면
-				System.out.println("ARP로 전달용");
 				this.GetUpperLayer(0).Receive(Header.data);
 				return true;
 			}else if(Header.frame_type == 0x0800) { // IP 타입이면
-				
-				System.out.println(MacToStr(Header.mac_src) + " -ETHER RECV> " + MacToStr(Header.mac_dst));
-				System.out.println("이더넷 IP 받음" + GetUpperLayer(1).GetLayerName() + "으로 전송");
-				TCP_HEADER test = ByteToObj(ByteToObj(ByteToObj(input, ETHERNET_HEADER.class).data, IP_HEADER.class).data,TCP_HEADER.class);
-				System.out.println(test.port_dst);
-				System.out.println(test.port_src);
 				this.GetUpperLayer(1).Receive(Header.data);
 				return true;
 			}

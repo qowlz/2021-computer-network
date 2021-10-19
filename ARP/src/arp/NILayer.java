@@ -3,24 +3,31 @@ package arp;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.jnetpcap.Pcap;
 import org.jnetpcap.PcapIf;
 import org.jnetpcap.packet.PcapPacket;
 import org.jnetpcap.packet.PcapPacketHandler;
 
+import arp.BaseLayer.ARP_CACHE;
+import arp.BaseLayer.IP_HEADER;
+
 public class NILayer extends BaseLayer {
 
 	ArrayList<PcapIf> allDevs = new ArrayList<PcapIf>();
 	StringBuilder errbuf = new StringBuilder();
+
 	public Pcap pcap;
 
 	public NILayer(String pName) {
 		pLayerName = pName;	
 		
-		int r = Pcap.findAllDevs(allDevs, errbuf);
+		Pcap.findAllDevs(allDevs, errbuf);
 		
-		if (r == Pcap.NOT_OK || allDevs.isEmpty()) {
+		if (allDevs.isEmpty()) {
 			System.out.println("네트워크 어뎁터가 없습니다.");
 			return;
 		}
@@ -40,13 +47,12 @@ public class NILayer extends BaseLayer {
 			return false;
 		}	return true;
 	}
-		
+    
 	public boolean Receive() {
 		Receive_Thread thread = new Receive_Thread(this.pcap, this.GetUpperLayer(0));
 		Thread obj = new Thread(thread);
 		obj.start();
-
-		return false;
+		return true;
 	}
 	
 	@Override
@@ -80,16 +86,17 @@ class Receive_Thread implements Runnable {
 
 	@Override
 	public void run() {
-		while (true) {
+		while(true) {
 			PcapPacketHandler<String> pph = new PcapPacketHandler<String>() {
+				@Override
 				public void nextPacket(PcapPacket packet, String user) {
 					data = packet.getByteArray(0, packet.size());
-					
 					UpperLayer.Receive(data);
 				}
 			};
-
-			adapter.loop(100000, pph, "");
+			
+			adapter.loop(100000, pph, "ARP");
 		}
 	}
+
 }

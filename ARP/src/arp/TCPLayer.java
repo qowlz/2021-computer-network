@@ -12,11 +12,8 @@ public class TCPLayer extends BaseLayer {
 	
 	public boolean Send(byte[] input) {
 		Header.data = Arrays.copyOf(input, input.length);
-		Header.port_src = 0x2090;
-		Header.port_dst = 0x2090;
-		
+
 		byte[] b = ObjToByte(Header);
-		System.out.println("TCP send length" + Header.data.length);
 		GetUnderLayer(0).Send(Arrays.copyOf(b, b.length));
 		return true;
 	}
@@ -25,14 +22,14 @@ public class TCPLayer extends BaseLayer {
 	public boolean Receive(byte[] input) {		
 		
 		Header = ByteToObj(input, TCP_HEADER.class);
-		System.out.println(Header.port_dst);
 		switch (Header.port_dst) {
 		case 0x2090:
-			System.out.println("채팅 받음");
+			System.out.println("채팅 패킷");
 			GetUpperLayer(0).Receive(Header.data);
 			return true;
 			
 		case 0x2091:
+			System.out.println("파일 패킷");
 			GetUpperLayer(1).Receive(Header.data);
 			return true;
 		}

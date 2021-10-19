@@ -63,8 +63,16 @@ public abstract class BaseLayer {
         byte[] capp_data = null;
     }
 	
-    public class ARP_CACHE{
-    	// ip雅뚯눘�꺖, mac雅뚯눘�꺖, status
+    public static class FILE_HEADER {
+        int fapp_totlen = 0;
+        short fapp_type = 0;
+        byte fapp_msg_type = 0x00;
+        byte fapp_unused = 0x00;
+        int fapp_seq_num = 0;
+        byte[] fapp_data = null;
+    }
+	
+    public static class ARP_CACHE{
     	public byte[] ip = new byte[4];
     	public byte[] mac = new byte[6];
     	public boolean status;
@@ -76,7 +84,7 @@ public abstract class BaseLayer {
     	}
     }
     
-    public class Proxy{
+    public static class Proxy{
     	public byte[] ip = new byte[4];
     	public byte[] mac = new byte[6];
     	

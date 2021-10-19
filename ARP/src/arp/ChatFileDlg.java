@@ -7,11 +7,11 @@ import java.awt.event.ActionListener;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.nio.file.Files;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -84,26 +84,7 @@ public class ChatFileDlg extends BaseLayer {
 		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *IP ( *TCP ( *Chat ( *ChatFileGUI ) *File ( *ChatFileGUI ) *ARPGUI ) ) ) *IP ) )");
 
 		ARPLayer ARP = (ARPLayer) m_LayerMgr.GetLayer("ARP");
-		ARP.appLayer = (ArpAppLayer) m_LayerMgr.GetLayer("ARPGUI");
-		
-		
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		DataOutputStream out = new DataOutputStream(baos);
-    	short d = (short) -10621;
-    	try {
-			out.writeByte((byte)(d  >> 8));
-			out.writeByte((byte)(d));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-    	
-    	byte[] result = baos.toByteArray();
-    	
-    	for (byte b : result)
-    		System.out.println(b);
-    	
-    	System.out.println(ByteBuffer.wrap(result, 0, 2).order(ByteOrder.BIG_ENDIAN).getShort());
-				
+		ARP.appLayer = (ArpAppLayer) m_LayerMgr.GetLayer("ARPGUI");				
 	}
 
 	public ChatFileDlg(String pName) {
@@ -207,7 +188,7 @@ public class ChatFileDlg extends BaseLayer {
 				JComboBox jcombo = (JComboBox) e.getSource();
 				adapterNumber = jcombo.getSelectedIndex();
 				
-				NI.setDevice(adapterNumber, 64 * 1024, Pcap.MODE_PROMISCUOUS, 10 * 1000);
+				NI.setDevice(adapterNumber, 65536, Pcap.MODE_PROMISCUOUS, 10 * 1000);
 
 				srcIpAddress.setText(IpToStr(ipAddress));
 				
@@ -310,11 +291,15 @@ public class ChatFileDlg extends BaseLayer {
 				int file_val = choose.showOpenDialog(null);
 				if(file_val == JFileChooser.APPROVE_OPTION){
 					file = choose.getSelectedFile();
-					FileUrl.setText(file.getPath());
+					FileUrl.setText(choose.getSelectedFile().getPath());
 					FileSelectButton.setEnabled(true);
 					FileUrl.setEnabled(false);
 					FileSendButton.setEnabled(true);
 					progressBar.setValue(0);
+					
+		        	String newChat = "[FILE SEND " + file.getName() + "]";
+		        	
+		        	ChattingArea.append(newChat);
 				}
 			}
 			
@@ -322,8 +307,8 @@ public class ChatFileDlg extends BaseLayer {
 				IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));			
 				IP.Header.ip_dst = StrToIp(dstIpAddress.getText());
 				
-				FileAppLayer FAlayer = (FileAppLayer)m_LayerMgr.GetLayer("FileApp");
-				File_Send_Thread FST = new File_Send_Thread(FAlayer);
+				FileAppLayer FAlayer = (FileAppLayer)m_LayerMgr.GetLayer("File");
+				File_Send_Thread FST = new File_Send_Thread(FAlayer, file);
 				Thread Send_Thread = new Thread(FST);
 				Send_Thread.start();
 			}
@@ -331,17 +316,24 @@ public class ChatFileDlg extends BaseLayer {
 	}
 	
 	class File_Send_Thread implements Runnable{
-		FileAppLayer FAL;
-		
-		public File_Send_Thread(FileAppLayer layer) {
-			// TODO Auto-generated constructor stub
-			this.FAL = layer;
+		FileAppLayer FileLayer;
+		File file;
+		byte[] data;
+		int length;
+		String name;
+		public File_Send_Thread(FileAppLayer layer, File file) {	
+			this.FileLayer = layer;
+			try {
+				this.data = Files.readAllBytes(file.toPath());
+			} catch (IOException e) {}
+			
+			this.name = file.getName();
+			this.length = data.length;
 		}
 		
 		@Override
 		public void run() {
-			// TODO Auto-generated method stub
-			FAL.setAndStartSendFile();
+			FileLayer.Send(this.data, this.length, this.name);
 		}
 		
 		
@@ -349,19 +341,14 @@ public class ChatFileDlg extends BaseLayer {
 
 	public boolean Receive(byte[] input) { //硫붿떆吏� Receive
 		if (input != null) {
-			System.out.println("CF app 에서 수신");
+			
 			byte[] data = input;   //byte �떒�쐞�쓽 input data
 			Text = new String(data); //�븘�옒痢듭뿉�꽌 �삱�씪�삩 硫붿떆吏�瑜� String text濡� 蹂��솚�빐以�
+
 			ChattingArea.append("[RECV] : " + Text + "\n"); //梨꾪똿李쎌뿉 �닔�떊硫붿떆吏�瑜� 蹂댁뿬以�
 			return false;
 		}
 		return false ;
-	}
-
-
-	public File getFile() {
-		// TODO Auto-generated method stub
-		return this.file;
 	}
 
 }

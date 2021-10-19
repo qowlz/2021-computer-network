@@ -235,7 +235,7 @@ public class ChatFileDlg extends BaseLayer {
 		this.progressBar.setStringPainted(true);
 		FileTransferPanel.add(this.progressBar);
 
-		FileSendButton = new JButton("�쟾�넚");
+		FileSendButton = new JButton("Send");
 		FileSendButton.setEnabled(false);
 		FileSendButton.setBounds(270, 50, 80, 20);
 		FileSendButton.addActionListener(new setAddressListener());

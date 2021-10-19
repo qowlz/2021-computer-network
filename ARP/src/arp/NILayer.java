@@ -3,17 +3,14 @@ package arp;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.jnetpcap.Pcap;
+import org.jnetpcap.PcapHeader;
 import org.jnetpcap.PcapIf;
+import org.jnetpcap.nio.JBuffer;
+import org.jnetpcap.nio.JMemory;
+import org.jnetpcap.packet.JRegistry;
 import org.jnetpcap.packet.PcapPacket;
-import org.jnetpcap.packet.PcapPacketHandler;
-
-import arp.BaseLayer.ARP_CACHE;
-import arp.BaseLayer.IP_HEADER;
 
 public class NILayer extends BaseLayer {
 
@@ -86,17 +83,17 @@ class Receive_Thread implements Runnable {
 
 	@Override
 	public void run() {
-		while(true) {
-			PcapPacketHandler<String> pph = new PcapPacketHandler<String>() {
-				@Override
-				public void nextPacket(PcapPacket packet, String user) {
-					data = packet.getByteArray(0, packet.size());
-					UpperLayer.Receive(data);
-				}
-			};
-			
-			adapter.loop(100000, pph, "ARP");
+		int id = JRegistry.mapDLTToId(adapter.datalink());
+		PcapHeader header = new PcapHeader(JMemory.POINTER);
+		JBuffer buff = new JBuffer(JMemory.POINTER);
+		while (adapter.nextEx(header, buff) == Pcap.NEXT_EX_OK) {
+			var packet = new PcapPacket(header, buff);
+			packet.scan(id);
+			data = packet.getByteArray(0, packet.size());
+			UpperLayer.Receive(data);
 		}
+
+		adapter.close();
 	}
 
 }

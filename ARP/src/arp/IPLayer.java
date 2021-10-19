@@ -93,10 +93,13 @@ public class IPLayer extends BaseLayer {
 		
 		if (Arrays.equals(Header.ip_dst, ipAddress)) { // 자기 ip면 전달
 			ARP_CACHE cache = ARP.getCache(Header.ip_src); // 송신지 ip 캐시에서 검색
-			if (cache == null) { //  나의 ip가 상대쪽 arp 테이블에만 있는경우 		
-				EthernetLayer Ethernet = (EthernetLayer)GetUnderLayer(1);
-				cache = new ARP_CACHE(Header.ip_src, Ethernet.Header.mac_src, true);
-				ARP.addCacheTable(cache);
+			if (cache == null) { //  나의 ip가 상대쪽 arp 테이블에만 있는경우 	
+				TCPLayer TCP = (TCPLayer)GetUpperLayer(0);
+				if (TCP.Header.port_dst == 0x2090 || TCP.Header.port_dst == 0x2091) {
+					EthernetLayer Ethernet = (EthernetLayer)GetUnderLayer(1);
+					cache = new ARP_CACHE(Header.ip_src, Ethernet.Header.mac_src, true);
+					ARP.addCacheTable(cache);
+				}
 			}
 			System.out.println(IpToStr(Header.ip_src) + "-IP_RECV>" + IpToStr(Header.ip_dst) );
 			GetUpperLayer(0).Receive(Header.data);

@@ -3,9 +3,6 @@ package arp;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.jnetpcap.Pcap;
 import org.jnetpcap.PcapHeader;
@@ -14,14 +11,6 @@ import org.jnetpcap.nio.JBuffer;
 import org.jnetpcap.nio.JMemory;
 import org.jnetpcap.packet.JRegistry;
 import org.jnetpcap.packet.PcapPacket;
-import org.jnetpcap.packet.PcapPacketHandler;
-
-import arp.BaseLayer.ARP_CACHE;
-import arp.BaseLayer.IP_HEADER;
-import org.jnetpcap.packet.format.FormatUtils;
-import org.jnetpcap.protocol.lan.Ethernet;
-import org.jnetpcap.protocol.network.Arp;
-import org.jnetpcap.protocol.network.Ip4;
 
 public class NILayer extends BaseLayer {
 

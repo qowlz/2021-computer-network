@@ -15,12 +15,12 @@ public class ChatAppLayer extends BaseLayer{
     }
 
     public boolean Send(byte[] input, short length) {
-        Header.capp_totlen = length;
-        Header.capp_type = (byte) (0x00);
+        Header.totalLen = length;
+        Header.type = (byte) (0x00);
         
         if (length <= MAXLEN) {
      
-            Header.capp_data = Arrays.copyOf(input, length);
+            Header.data = Arrays.copyOf(input, length);
                	
             TCPLayer TCP = (TCPLayer) GetUnderLayer(0);
         	TCP.Header.port_src = 0x2090;
@@ -33,10 +33,10 @@ public class ChatAppLayer extends BaseLayer{
 	       
 	        	byte[] data = new byte[left_packet];
 
-		        Header.capp_type++;
+		        Header.type++;
 		        System.out.println(data.length + " 번째 보냄");
 	        	System.arraycopy(input, i, data, 0, left_packet);
-	        	Header.capp_data = Arrays.copyOf(data, left_packet);	
+	        	Header.data = Arrays.copyOf(data, left_packet);
 	        	
 				IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
 				IP.Header.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
@@ -57,22 +57,22 @@ public class ChatAppLayer extends BaseLayer{
     	
         if (input == null) return true;
                 
-        if (Header.capp_type == 0) {
-        	this.GetUpperLayer(0).Receive(Header.capp_data);
+        if (Header.type == 0) {
+        	this.GetUpperLayer(0).Receive(Header.data);
         	return true;
         }
         
-        int offset = (Header.capp_type-1) * MAXLEN;
+        int offset = (Header.type -1) * MAXLEN;
         
     	if (fragBytes == null) {
-        	fragBytes = new byte[Header.capp_totlen];
+        	fragBytes = new byte[Header.totalLen];
         	totalBytes = 0;
     	}
 
-    	totalBytes += Header.capp_data.length;
-    	System.arraycopy(Header.capp_data, 0, fragBytes, offset, Header.capp_data.length);
+    	totalBytes += Header.data.length;
+    	System.arraycopy(Header.data, 0, fragBytes, offset, Header.data.length);
 
-    	if (Header.capp_totlen <= totalBytes) {
+    	if (Header.totalLen <= totalBytes) {
     		System.out.println(totalBytes + "채팅 받음");
     		for (byte b : fragBytes)
     			System.out.printf("%d ",b);

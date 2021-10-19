@@ -57,10 +57,10 @@ public abstract class BaseLayer {
 	}
 	
 	public static class CHAT_HEADER {
-        short capp_totlen = 0;
-        byte capp_type = 0x00;
-        byte capp_unused = 0x00;
-        byte[] capp_data = null;
+        short totalLen = 0;
+        byte type = 0x00;
+        byte unused = 0x00;
+        byte[] data = null;
     }
 	
     public static class FILE_HEADER {

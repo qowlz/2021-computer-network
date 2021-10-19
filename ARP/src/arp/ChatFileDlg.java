@@ -9,6 +9,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -276,7 +277,11 @@ public class ChatFileDlg extends BaseLayer {
 				if (Setting_Button.getText() == "Reset") { 
 					String input = ChattingWrite.getText(); //梨꾪똿李쎌뿉 �엯�젰�맂 �뀓�뒪�듃瑜� ���옣
 					ChattingArea.append("[SEND] : " + input + "\n"); //�꽦怨듯븯硫� �엯�젰媛� 異쒕젰
-					byte[] bytes = input.getBytes(); //�엯�젰�맂 硫붿떆吏�瑜� 諛붿씠�듃濡� ���옣
+					byte[] bytes = null;
+					try {
+						bytes = input.getBytes("UTF-8"); //�엯�젰�맂 硫붿떆吏�瑜� 諛붿씠�듃濡� ���옣
+					} catch (UnsupportedEncodingException e1) {
+					} 
 					IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
 					//arp.ChatAppLayer.Send(byte[])" because the return value of "arp.LayerManager.GetLayer(String)" is null
 					IP.Header.ip_dst = StrToIp(dstIpAddress.getText());
@@ -346,7 +351,12 @@ public class ChatFileDlg extends BaseLayer {
 		if (input != null) {
 			
 			byte[] data = input;   //byte �떒�쐞�쓽 input data
-			Text = new String(data); //�븘�옒痢듭뿉�꽌 �삱�씪�삩 硫붿떆吏�瑜� String text濡� 蹂��솚�빐以�
+			try {
+				Text = new String(data, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} //�븘�옒痢듭뿉�꽌 �삱�씪�삩 硫붿떆吏�瑜� String text濡� 蹂��솚�빐以�
 
 			ChattingArea.append("[RECV] : " + Text + "\n"); //梨꾪똿李쎌뿉 �닔�떊硫붿떆吏�瑜� 蹂댁뿬以�
 			return false;

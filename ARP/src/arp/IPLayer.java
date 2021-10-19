@@ -48,10 +48,9 @@ public class IPLayer extends BaseLayer {
             	//}catch(Exception e) {
             	//	System.out.println(e.toString());
             	//}
-            	
             }
         };
-        timer.schedule(task, time, time); 
+        timer.schedule(task, 0, time);
     }
 	
     

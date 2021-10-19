@@ -88,6 +88,7 @@ class Receive_Thread implements Runnable {
 		JBuffer buff = new JBuffer(JMemory.POINTER);
 		while (adapter.nextEx(header, buff) == Pcap.NEXT_EX_OK) {
 			var packet = new PcapPacket(header, buff);
+			packet.scan(id);
 			data = packet.getByteArray(0, packet.size());
 			UpperLayer.Receive(data);
 		}

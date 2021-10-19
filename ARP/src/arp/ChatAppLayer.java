@@ -15,8 +15,6 @@ public class ChatAppLayer extends BaseLayer{
     }
 
     public boolean Send(byte[] input, short length) {
-
-        Header = ByteToObj(input, CHAT_HEADER.class);
         Header.capp_totlen = length;
         Header.capp_type = (byte) (0x00);
         

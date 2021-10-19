@@ -175,7 +175,7 @@ public class ChatFileDlg extends BaseLayer {
 		
 		for (int i = 0; i < NI.getAdapterList().size(); i++) { //�꽕�듃�썙�겕 �씤�꽣�럹�씠�뒪媛� ���옣�맂 �뼱�럞�꽣 由ъ뒪�듃�쓽 �궗�씠利덈쭔�겮�쓽 諛곗뿴 �깮�꽦
 			//NICComboBox.addItem(((NILayer) m_LayerMgr.GetLayer("NI")).GetAdapterObject(i).getDescription());
-			PcapIf pcapIf = NI.GetAdapterObject(i); //
+			PcapIf pcapIf = NI.getAdapter(i); //
 			NICComboBox.addItem(pcapIf.getName()); // NIC �꽑�깮 李쎌뿉 �뼱�뙌�꽣瑜� 蹂댁뿬以�
 		}
 

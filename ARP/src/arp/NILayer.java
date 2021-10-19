@@ -61,7 +61,7 @@ public class NILayer extends BaseLayer {
 		}	return true;
 	}
 	
-	public PcapIf GetAdapterObject(int iIndex) {
+	public PcapIf getAdapter(int iIndex) {
 		return allDevs.get(iIndex);
 	}
 	

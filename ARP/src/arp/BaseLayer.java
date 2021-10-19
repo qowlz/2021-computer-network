@@ -4,8 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -227,75 +225,59 @@ public abstract class BaseLayer {
 		        	idx++;
 		        }
 		    } catch (IllegalAccessException e) {}
-		}
-		
+		}	
 	    return type.cast(obj);
 	}
 	
 	public static String MacToStr(byte[] mac) {
-		final StringBuilder buf = new StringBuilder();
+		StringBuilder result = new StringBuilder();
 		for (byte b : mac) {
-			if (buf.length() != 0) buf.append(":");	
-			buf.append(Integer.toHexString((b < 0) ? b + 256 : b).toUpperCase());		
+			if (result.length() != 0) result.append(":");	
+			result.append(Integer.toHexString((b < 0) ? b + 256 : b).toUpperCase());		
 		}
-		return buf.toString();
+		return result.toString();
 	}
 	
 	public static byte[] StrToMac(String mac) {
-		byte[] ret = new byte[6];
+		byte[] result = new byte[6];
 		StringTokenizer tokens = new StringTokenizer(mac, ":");
+		
 		for (int i = 0; tokens.hasMoreElements(); i++) {
 			String temp = tokens.nextToken();
 			try {
-				ret[i] = Byte.parseByte(temp, 16);
+				result[i] = Byte.parseByte(temp, 16);
 			} catch (NumberFormatException e) {
 				int minus = (Integer.parseInt(temp, 16)) - 256;
-				ret[i] = (byte) (minus);
+				result[i] = (byte) (minus);
 			}
 		}
-		return ret;
+		return result;
 	}
 	
-	public static byte[] StrToIp(String ip) {
-		byte[] ret = new byte[4];
-		
-		int idx=0;
-		for (String tk :  ip.split("\\.")) {
-			System.out.println(tk);
-			ret[idx] = (byte)(Integer.parseInt(tk));
-			idx++;
-		}
-	
-		
-		return ret;
-	}
-
-	public static boolean isBroadcast(byte[] addr) {
-
-		for (byte val : addr) {
-			if (val != (byte)0xFF) return false;
-		}
-		return true;
-	}
-
-	public static String IpToStr(byte[] stringIP) {
+	public static String IpToStr(byte[] ip) {
 		String result = "";
-		for(byte raw : stringIP){
-			result += raw & 0xFF;
+		for(byte b : ip){
+			result += b & 0xFF;
 			result += ".";
 		}
 		return result.substring(0, result.length()-1);		
 	}
-    public static byte[] intToByte2(int value) {
-        byte[] temp = new byte[2];
-        temp[0] |= (byte) ((value & 0xFF00) >> 8);
-        temp[1] |= (byte) (value & 0xFF);
+	
+	public static byte[] StrToIp(String ip) {
+		byte[] result = new byte[4];
+		int idx=0;
+		
+		for (String s :  ip.split("\\.")) {
+			System.out.println(s);
+			result[idx++] = (byte)(Integer.parseInt(s));
+		}
+		return result;
+	}
 
-        return temp;
-    }
-
-    public static int byte2ToInt(byte value1, byte value2) {
-	    return (int)((value1 << 8) | (value2));
+	public static boolean isBroadcast(byte[] addr) {
+		for (byte val : addr) 
+			if (val != (byte)0xFF) return false;
+		return true;
 	}
 
 }

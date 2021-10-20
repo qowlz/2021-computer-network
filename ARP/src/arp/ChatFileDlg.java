@@ -244,47 +244,47 @@ public class ChatFileDlg extends BaseLayer {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 
-			if (e.getSource() == Setting_Button) { //setting 踰꾪듉 �늻瑜� �떆
+			if (e.getSource() == Setting_Button) { //setting 버튼 이벤트
 
-				if (Setting_Button.getText() == "Reset") { //reset �닃�젮議뚯쓣 寃쎌슦,
-					srcIpAddress.setText("");  //二쇱냼 怨듬갚�쑝濡� 諛붾��
-					dstIpAddress.setText("");  //二쇱냼 怨듬갚�쑝濡� 諛붾��
+				if (Setting_Button.getText() == "Reset") { // Reset 상태에서 클릭
+					srcIpAddress.setText("");
+					dstIpAddress.setText("");  // src, dst IP 초기화
 
-					Setting_Button.setText("Setting"); //踰꾪듉�쓣 �늻瑜대㈃, setting�쑝濡� 諛붾��
-					srcIpAddress.setEnabled(true);  //踰꾪듉�쓣 �솢�꽦�솕�떆�궡
-					dstIpAddress.setEnabled(true);  //踰꾪듉�쓣 �솢�꽦�솕�떆�궡
+					Setting_Button.setText("Setting"); // Setting 상태로 설정
+					srcIpAddress.setEnabled(true);  // 변경 가능
+					dstIpAddress.setEnabled(true);  // 변경 가능
 					
 				}  
-				else { //�넚�닔�떊二쇱냼 �꽕�젙
+				else { // Setting 상태에 클릭
 
 					NILayer NI = (NILayer) m_LayerMgr.GetLayer("NI");
-					NI.Receive();
+					NI.Receive(); // Receive Thread 실행
 
-					Setting_Button.setText("Reset"); //setting 踰꾪듉 �늻瑜대㈃ 由ъ뀑�쑝濡� 諛붾��
-					srcIpAddress.setEnabled(false);  //踰꾪듉�쓣 鍮꾪솢�꽦�솕�떆�궡
-					dstIpAddress.setEnabled(false);  //踰꾪듉�쓣 鍮꾪솢�꽦�솕�떆�궡  
+					Setting_Button.setText("Reset"); // Reset 상태로 변경
+					srcIpAddress.setEnabled(false);  // 변경 불가
+					dstIpAddress.setEnabled(false);  // 변경 불가
 				} 
 			}
 
-			if (e.getSource() == Chat_send_Button) { //send 踰꾪듉 �늻瑜대㈃, 
-				if (Setting_Button.getText() == "Reset") { 
-					String input = ChattingWrite.getText(); //梨꾪똿李쎌뿉 �엯�젰�맂 �뀓�뒪�듃瑜� ���옣
-					ChattingArea.append("[SEND] : " + input + "\n"); //�꽦怨듯븯硫� �엯�젰媛� 異쒕젰
+			if (e.getSource() == Chat_send_Button) { // Chat send
+				if (Setting_Button.getText() == "Reset") { // Src dst 가 설정된 상태
+					String input = ChattingWrite.getText(); // 입력칸의 Text
+					ChattingArea.append("[SEND] : " + input + "\n"); //  ChattingArea에 추가
 					byte[] bytes = null;
 					try {
-						bytes = input.getBytes("UTF-8"); //�엯�젰�맂 硫붿떆吏�瑜� 諛붿씠�듃濡� ���옣
+						bytes = input.getBytes("UTF-8"); // UTF-8 인코딩으로 Byte array 변환
 					} catch (UnsupportedEncodingException e1) {
 					} 
 					IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
-					//arp.ChatAppLayer.Send(byte[])" because the return value of "arp.LayerManager.GetLayer(String)" is null
+
 					IP.SendHeader.ip_dst = StrToIp(dstIpAddress.getText());
 
 					((ChatAppLayer)GetUnderLayer(0)).Send(bytes, (short)(bytes.length));
-					//梨꾪똿李쎌뿉 �엯�젰�맂 硫붿떆吏�瑜� chatApplayer濡� 蹂대깂
+					// byte array로 변환된 입력 String과 byte array의 길이를 Chat App Layer로 전송
 					ChattingWrite.setText(""); 
-					//梨꾪똿 �엯�젰�� �떎�떆 鍮꾩썙以�
+					// 입력칸 초기화
 				} else {
-					JOptionPane.showMessageDialog(null, "Address Setting Error!.");//二쇱냼�꽕�젙 �뿉�윭
+					JOptionPane.showMessageDialog(null, "Address Setting Error!.");// IP 설정이 안된 상태
 				}
 			}
 			if(e.getSource() == FileSelectButton){
@@ -338,18 +338,18 @@ public class ChatFileDlg extends BaseLayer {
 		}
 	}
 
-	public boolean Receive(byte[] input) { //硫붿떆吏� Receive
+	public boolean Receive(byte[] input) { // Chat Receive
 		if (input != null) {
 			
-			byte[] data = input;   //byte �떒�쐞�쓽 input data
+			byte[] data = input;   //byte chat input data
 			try {
 				Text = new String(data, "UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} //�븘�옒痢듭뿉�꽌 �삱�씪�삩 硫붿떆吏�瑜� String text濡� 蹂��솚�빐以�
+			}
 
-			ChattingArea.append("[RECV] : " + Text + "\n"); //梨꾪똿李쎌뿉 �닔�떊硫붿떆吏�瑜� 蹂댁뿬以�
+			ChattingArea.append("[RECV] : " + Text + "\n"); // ChattingArea에 추
 
 			return false;
 		}

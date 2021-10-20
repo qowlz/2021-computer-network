@@ -12,7 +12,6 @@ public class IPLayer extends BaseLayer {
 	
 	public ArrayList<IP_HEADER> packet_queue = new ArrayList<IP_HEADER>();
 	
-	
 	public IPLayer(String pName) {
 		pLayerName = pName;
 	}
@@ -39,6 +38,7 @@ public class IPLayer extends BaseLayer {
                     			Packet.ip_dst = cache.ip;
                     			Packet.ip_version = 4;
                     			Packet.ip_src = ipAddress;
+                    			
                     			byte[] b = ObjToByte(Packet);
                     			Ethernet.Send(Arrays.copyOf(b, b.length)); // Ethernet으로 보냄
                     			
@@ -69,7 +69,7 @@ public class IPLayer extends BaseLayer {
 			ARP.SendHeader.ip_dst = Arrays.copyOf(SendHeader.ip_dst, 4); // ARP의 대상 ip 변경
 			EthernetLayer Ethernet = (EthernetLayer)GetUnderLayer(1);
 			Ethernet.SendHeader.frame_type = 0x0806; // type 지정하
-				
+			
 			if (UpperHeader.data.length != 0) { // 데이터가 있는데 미적중 했다는뜻
 
 				IP_HEADER Pacekt = new IP_HEADER();

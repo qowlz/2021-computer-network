@@ -35,7 +35,6 @@ public class ChatAppLayer extends BaseLayer{
 	        	byte[] data = new byte[left_packet];
 
 	        	SendHeader.type++;
-		        System.out.println(data.length + " 번째 보냄");
 	        	System.arraycopy(input, i, data, 0, left_packet);
 	        	SendHeader.data = Arrays.copyOf(data, left_packet);
 	        	
@@ -74,10 +73,6 @@ public class ChatAppLayer extends BaseLayer{
     	System.arraycopy(RecvHeader.data, 0, fragBytes, offset, RecvHeader.data.length);
 
     	if (RecvHeader.totalLen <= totalBytes) {
-    		System.out.println(totalBytes + "채팅 받음");
-    		for (byte b : fragBytes)
-    			System.out.printf("%d ",b);
-    		System.out.println("");
     		GetUpperLayer(0).Receive(Arrays.copyOf(fragBytes, fragBytes.length));
     		fragBytes = null;
     	}

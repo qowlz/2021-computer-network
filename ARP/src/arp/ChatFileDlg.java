@@ -301,7 +301,7 @@ public class ChatFileDlg extends BaseLayer {
 					FileSendButton.setEnabled(true);
 					progressBar.setValue(0);
 					
-		        	String newChat = "[FILE SEND " + file.getName() + "]";
+		        	String newChat = "[FILE SEND " + file.getName() + "]\n";
 		        	
 		        	ChattingArea.append(newChat);
 				}

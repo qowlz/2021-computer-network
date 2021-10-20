@@ -18,6 +18,8 @@ public class NILayer extends BaseLayer {
 	private StringBuilder errbuf = new StringBuilder();
 
 	private Pcap pcap;
+	
+	public static boolean exitProgram = false;
 
 	public NILayer(String pName) {
 		pLayerName = pName;	
@@ -82,14 +84,14 @@ class Receive_Thread implements Runnable {
 		int id = JRegistry.mapDLTToId(adapter.datalink());
 		PcapHeader header = new PcapHeader(JMemory.POINTER);
 		JBuffer buff = new JBuffer(JMemory.POINTER);
-		while (adapter.nextEx(header, buff) == Pcap.NEXT_EX_OK) {
+		while (adapter.nextEx(header, buff) == Pcap.NEXT_EX_OK && NILayer.exitProgram != true) {
 			var packet = new PcapPacket(header, buff);
 			packet.scan(id);
 			data = packet.getByteArray(0, packet.size());
 			UpperLayer.Receive(data);
 		}
-
 		adapter.close();
+		System.exit(0);
 	}
 
 }

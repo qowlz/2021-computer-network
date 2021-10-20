@@ -49,14 +49,7 @@ public class ARPLayer extends BaseLayer{
 		GetUnderLayer(0).Send(ObjToByte(SendHeader));
 		return true;
 	}
-	public String ipByteToString(byte[] stringIP) {
-		String result = "";
-		for(byte raw : stringIP){
-			result += raw & 0xFF;
-			result += ".";
-		}
-		return result.substring(0, result.length()-1);		
-	}
+
 	//receive
 	@Override
 	public boolean Receive(byte[] input) {

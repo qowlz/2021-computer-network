@@ -14,10 +14,10 @@ import org.jnetpcap.packet.PcapPacket;
 
 public class NILayer extends BaseLayer {
 
-	ArrayList<PcapIf> allDevs = new ArrayList<PcapIf>();
-	StringBuilder errbuf = new StringBuilder();
+	private ArrayList<PcapIf> allDevs = new ArrayList<PcapIf>();
+	private StringBuilder errbuf = new StringBuilder();
 
-	public Pcap pcap;
+	private Pcap pcap;
 
 	public NILayer(String pName) {
 		pLayerName = pName;	
@@ -58,23 +58,19 @@ public class NILayer extends BaseLayer {
 		if (pcap.sendPacket(buf) != Pcap.OK) {
 			System.err.println(pcap.getErr());
 			return false;
-		}	return true;
+		}
+		return true;
 	}
-	
-	public PcapIf getAdapter(int iIndex) {
-		return allDevs.get(iIndex);
-	}
-	
 	public ArrayList<PcapIf> getAdapterList() {
 		return allDevs;
 	}
-	
+
 }
 
 class Receive_Thread implements Runnable {
-	byte[] data;
-	Pcap adapter;
-	BaseLayer UpperLayer;
+	private byte[] data;
+	private Pcap adapter;
+	private BaseLayer UpperLayer;
 
 	public Receive_Thread(Pcap adt, BaseLayer upper) {
 		adapter = adt;

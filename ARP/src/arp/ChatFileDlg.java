@@ -37,15 +37,15 @@ public class ChatFileDlg extends BaseLayer {
 	
 	Container contentPane;
 
-	JTextArea ChattingArea; //梨쀭똿�솕硫� 蹂댁뿬二쇰뒗 �쐞移�
+	JTextArea ChattingArea;
 	JTextArea srcIpAddress;
 	JTextArea dstIpAddress;
 
-	JLabel lblsrc;  // Label(�씠由�)
-	JLabel lbldst;
+	JLabel lblsrc;  // src label
+	JLabel lbldst;  // dst label
 
-	JButton Setting_Button; //Port踰덊샇(二쇱냼)瑜� �엯�젰諛쏆� �썑 �셿猷뚮쾭�듉�꽕�젙
-	JButton Chat_send_Button; //梨꾪똿�솕硫댁쓽 梨꾪똿 �엯�젰 �셿猷� �썑 data Send踰꾪듉
+	JButton Setting_Button;
+	JButton Chat_send_Button;
 
 	JButton FileSelectButton;
 	JButton FileSendButton;
@@ -82,8 +82,8 @@ public class ChatFileDlg extends BaseLayer {
 
 		((IPLayer)m_LayerMgr.GetLayer("IP")).RunTimerTask(1000);
 
-		ARPLayer ARP = (ARPLayer) m_LayerMgr.GetLayer("ARP");
-		ARP.appLayer = (ArpAppLayer) m_LayerMgr.GetLayer("ARPGUI");				
+		ARPLayer ARP = (ARPLayer) m_LayerMgr.GetLayer("ARP");		
+		ARP.setArpAppLayer((ArpAppLayer) m_LayerMgr.GetLayer("ARPGUI"));
 	}
 
 	public ChatFileDlg(String pName) {
@@ -114,7 +114,7 @@ public class ChatFileDlg extends BaseLayer {
 		ChattingArea.setEditable(true);
 		ChattingArea.setBounds(10, 15, 340, 210);
 		chattingEditorPanel.add(ChattingArea);// chatting edit
-		ChattingArea.setLineWrap(true);
+		ChattingArea.setLineWrap(true); // Auto new line
 
 		JPanel chattingInputPanel = new JPanel();// chatting write panel
 		chattingInputPanel.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
@@ -127,7 +127,7 @@ public class ChatFileDlg extends BaseLayer {
 		chattingInputPanel.add(ChattingWrite);
 		ChattingWrite.setColumns(10);// writing area
 
-		JPanel settingPanel = new JPanel(); //Setting 愿��젴 �뙣�꼸
+		JPanel settingPanel = new JPanel(); //Setting Panel
 		settingPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "setting",
 				TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
 		settingPanel.setBounds(380, 5, 236, 371);
@@ -141,8 +141,8 @@ public class ChatFileDlg extends BaseLayer {
 		sourceAddressPanel.setLayout(null);
 
 		lblsrc = new JLabel("Source IP Address");
-		lblsrc.setBounds(10, 115, 170, 20); //�쐞移� 吏��젙
-		settingPanel.add(lblsrc); //panel 異붽�
+		lblsrc.setBounds(10, 115, 170, 20);
+		settingPanel.add(lblsrc); // src 라벨 추가
 
 		srcIpAddress = new JTextArea();
 		srcIpAddress.setBounds(2, 2, 170, 20); 
@@ -170,16 +170,13 @@ public class ChatFileDlg extends BaseLayer {
 		NICComboBox = new JComboBox();
 		NICComboBox.setBounds(10, 49, 170, 20);
 		settingPanel.add(NICComboBox);
-		
-		NILayer NI = (NILayer) m_LayerMgr.GetLayer("NI"); //肄ㅻ낫諛뺤뒪 由ъ뒪�듃�뿉 異붽��븯湲� �쐞�븳 �씤�꽣�럹�씠�뒪 媛앹껜
-		
-		for (int i = 0; i < NI.getAdapterList().size(); i++) { //�꽕�듃�썙�겕 �씤�꽣�럹�씠�뒪媛� ���옣�맂 �뼱�럞�꽣 由ъ뒪�듃�쓽 �궗�씠利덈쭔�겮�쓽 諛곗뿴 �깮�꽦
-			//NICComboBox.addItem(((NILayer) m_LayerMgr.GetLayer("NI")).GetAdapterObject(i).getDescription());
-			PcapIf pcapIf = NI.getAdapter(i); //
-			NICComboBox.addItem(pcapIf.getName()); // NIC �꽑�깮 李쎌뿉 �뼱�뙌�꽣瑜� 蹂댁뿬以�
+
+		NILayer NI = (NILayer) m_LayerMgr.GetLayer("NI");
+		for (PcapIf pcapIf : NI.getAdapterList()){
+			NICComboBox.addItem(pcapIf.getName()); // NIC 콤보 박스에 탐색한 네트워크 어댑터들을 추가
 		}
 
-		NICComboBox.addActionListener(new ActionListener() { //combo諛뺤뒪瑜� �닃���쓣 �븣�쓽 �룞�옉
+		NICComboBox.addActionListener(new ActionListener() { // ComboBox 이벤트 발생
 
 			@Override
 			public void actionPerformed(ActionEvent e) {

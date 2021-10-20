@@ -182,7 +182,7 @@ public class ArpAppLayer extends BaseLayer{
 					byte[] byteIp = StrToIp(inputIp);
 					byte[] byteMac = StrToMac(inputMac);
 					
-					ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
+					ARPLayer arpLayer = (ARPLayer)layerManager.GetLayer("ARP");
 					arpLayer.addProxy(byteIp, byteMac);
 					
 					setVisible(false);

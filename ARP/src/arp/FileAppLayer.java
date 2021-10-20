@@ -16,10 +16,10 @@ public class FileAppLayer extends BaseLayer {
     final int MAXLEN = 1400;
     final byte INFO = 0x00;
     final byte DATA = 0x01;
+    final byte RESEND = 0x02;
     final byte DONE = 0x03;
     final byte DONE_OK = 0x04;
-    final byte RESEND = 0x05;
-
+    
 	FILE_HEADER SendHeader = new FILE_HEADER();
 	FILE_HEADER RecvHeader = new FILE_HEADER();
 
@@ -31,7 +31,7 @@ public class FileAppLayer extends BaseLayer {
 
     public boolean Send(byte[] input, int length, String name) {
 
-    	fileData = input;
+    	fileData = Arrays.copyOf(input, input.length);
     	fileName = name;
     	
     	SendHeader.fapp_seq_num = 0;
@@ -108,14 +108,14 @@ public class FileAppLayer extends BaseLayer {
     	int length = fileData.length;
     	int idx = 0;
     	TCPLayer TCP = (TCPLayer) GetUnderLayer(0);
-    	
+
         for(int i = 0; i < length; i +=MAXLEN) {
         	if (input[idx++] == 0) {
         		byte[] data = new byte[MAXLEN];
 
             	SendHeader.fapp_msg_type = DATA;
             	SendHeader.fapp_totlen = length;
-            	SendHeader.fapp_seq_num = idx;
+            	SendHeader.fapp_seq_num = idx-1;
 
             	System.arraycopy(fileData, i, data, 0, MAXLEN);
             	SendHeader.fapp_data = Arrays.copyOf(data, MAXLEN);	
@@ -166,7 +166,10 @@ public class FileAppLayer extends BaseLayer {
         }
         
         if (RecvHeader.fapp_msg_type == DONE_OK) {
-        	((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(RecvHeader.fapp_totlen);
+        	((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(0);
+        	fragBytes = null;
+            totalBytes = 0;
+            fileName = null;
         }
 
         if (RecvHeader.fapp_msg_type == INFO) {
@@ -213,7 +216,7 @@ public class FileAppLayer extends BaseLayer {
             	fragBytes = null;
                 totalBytes = 0;
                 fileName = null;
-                ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(RecvHeader.fapp_totlen);
+                ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(0);
                 
         		IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
         		IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
@@ -231,7 +234,7 @@ public class FileAppLayer extends BaseLayer {
         }
         
         if (RecvHeader.fapp_msg_type == DONE) { 
-        	if (RecvHeader.fapp_totlen > totalBytes) { // 재전송
+        	if (RecvHeader.fapp_totlen > totalBytes && totalBytes != 0) { // 재전송
             	SendHeader.fapp_msg_type = RESEND;
             	SendHeader.fapp_totlen = RecvHeader.fapp_totlen;
             	SendHeader.fapp_data = fragCheck;

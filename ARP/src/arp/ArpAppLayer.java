@@ -240,24 +240,17 @@ public class ArpAppLayer extends BaseLayer{
 			if(e.getSource() == ARP_IPSend) {
 				//IP 입력 후 send버튼 눌렀을 때
 				String inputIP = IPTextField.getText().trim();
+
+				byte[] dstIP = StrToIp(inputIP);
 				
-				InetAddress ip = null;
-				try {
-					ip = InetAddress.getByName(inputIP);
-					byte[] dstIP = ip.getAddress();
-					
-					IPLayer IP = (IPLayer)m_LayerMgr.GetLayer("IP");
-					IP.SendHeader.ip_dst = Arrays.copyOf(dstIP, 4);
-								
-					TCPLayer tcpLayer = (TCPLayer)GetUnderLayer(0);
-					tcpLayer.Send(new byte[0]);
-					
-					//arpLayer.Send(new byte[0], 0);
-					
-				} catch (UnknownHostException e1) {
-					e1.printStackTrace();
-				}
+				IPLayer IP = (IPLayer)m_LayerMgr.GetLayer("IP");
+				IP.SendHeader.ip_dst = Arrays.copyOf(dstIP, 4);
+							
+				TCPLayer tcpLayer = (TCPLayer)GetUnderLayer(0);
+				tcpLayer.Send(new byte[0]);
 				
+				//arpLayer.Send(new byte[0], 0);
+
 				IPTextField.setText("");
 			}
 			
@@ -270,14 +263,8 @@ public class ArpAppLayer extends BaseLayer{
 				}
 				else {
 					String ipAddress = arpModel.getValueAt(selectRow, 0).toString();
-					InetAddress ip = null;
-					try {
-						ip = InetAddress.getByName(ipAddress);
-					} catch (UnknownHostException e1) {
-						// TODO 자동 생성된 catch 블록
-						e1.printStackTrace();
-					}
-					byte[] byteIp = ip.getAddress();
+					
+					byte[] byteIp = StrToIp(ipAddress);
 					arpLayer.cacheRemove(byteIp);
 				}
 			}
@@ -304,14 +291,8 @@ public class ArpAppLayer extends BaseLayer{
 				}
 				else {
 					String ipAddress = proxyModel.getValueAt(selectRow, 0).toString();
-					InetAddress ip = null;
-					try {
-						ip = InetAddress.getByName(ipAddress);
-					} catch (UnknownHostException e1) {
-						// TODO 자동 생성된 catch 블록
-						e1.printStackTrace();
-					}
-					byte[] byteIp = ip.getAddress();
+
+					byte[] byteIp = StrToIp(ipAddress);
 					arpLayer.proxyRemove(byteIp);
 				}
 			}
@@ -336,20 +317,6 @@ public class ArpAppLayer extends BaseLayer{
 		}
 	}
 	
-	public String macByteToString(byte[] byte_MacAddress) { //MAC Byte주소를 String으로 변환
-		String MacAddress = "";
-		for (int i = 0; i < 6; i++) { 
-			//2자리 16진수를 대문자로, 그리고 1자리 16진수는 앞에 0을 붙임.
-			MacAddress += String.format("%02X%s", byte_MacAddress[i], (i < MacAddress.length() - 1) ? "" : "");
-			
-			if (i != 5) {
-				//2자리 16진수 자리 단위 뒤에 "-"붙여주기
-				MacAddress += ":";
-			}
-		}
-		return MacAddress;
-	}
-
 	public void updateARPCacheTable(ArrayList<ARP_CACHE> cache_table) {
 		// GUI에 cache table 업데이트
 		//ip주소를 string으로 변환 필요
@@ -375,7 +342,7 @@ public class ArpAppLayer extends BaseLayer{
     			row[2] = "incomplete";
     		}
     		else {
-    			row[1] = macByteToString(cache.mac);
+    			row[1] = MacToStr(cache.mac);
     			row[2] = "complete";
     		}
     		
@@ -398,7 +365,7 @@ public class ArpAppLayer extends BaseLayer{
     		String[] row = new String[2];
     		
     		row[0] = IpToStr(proxy.ip);
-    		row[1] = macByteToString(proxy.mac);
+    		row[1] = MacToStr(proxy.mac);
     		
     		proxyModel.addRow(row);
     	}

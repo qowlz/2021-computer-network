@@ -62,12 +62,12 @@ public abstract class BaseLayer {
     }
 	
     public static class FILE_HEADER {
-        int fapp_totlen = 0;
-        short fapp_type = 0;
-        byte fapp_msg_type = 0x00;
-        byte fapp_unused = 0x00;
-        int fapp_seq_num = 0;
-        byte[] fapp_data = null;
+        int totalLen = 0;
+        short type = 0;
+        byte msgType = 0x00;
+        byte unused = 0x00;
+        int seqNum = 0;
+        byte[] data = null;
     }
 	
     public static class ARP_CACHE{

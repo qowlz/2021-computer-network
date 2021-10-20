@@ -34,10 +34,10 @@ public class FileAppLayer extends BaseLayer {
     	fileData = Arrays.copyOf(input, input.length);
     	fileName = name;
     	
-    	SendHeader.fapp_seq_num = 0;
-    	SendHeader.fapp_totlen = length;
-    	SendHeader.fapp_msg_type = INFO;
-    	SendHeader.fapp_data = name.getBytes();
+    	SendHeader.seqNum = 0;
+    	SendHeader.totalLen = length;
+    	SendHeader.msgType = INFO;
+    	SendHeader.data = name.getBytes();
         
         TCPLayer TCP = (TCPLayer) GetUnderLayer(0);
     	TCP.SendHeader.port_src = 0x2091;
@@ -50,8 +50,8 @@ public class FileAppLayer extends BaseLayer {
     	
         if (length <= MAXLEN) {
      
-        	SendHeader.fapp_msg_type = DATA;
-        	SendHeader.fapp_data = Arrays.copyOf(input, length);
+        	SendHeader.msgType = DATA;
+        	SendHeader.data = Arrays.copyOf(input, length);
             
 			IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 			IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
@@ -65,10 +65,10 @@ public class FileAppLayer extends BaseLayer {
 	       
 	        	byte[] data = new byte[left_packet];
 
-	        	SendHeader.fapp_msg_type = DATA;
+	        	SendHeader.msgType = DATA;
 
 	        	System.arraycopy(input, i, data, 0, left_packet);
-	        	SendHeader.fapp_data = Arrays.copyOf(data, left_packet);	
+	        	SendHeader.data = Arrays.copyOf(data, left_packet);
 	        	
 				IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 				IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
@@ -77,7 +77,7 @@ public class FileAppLayer extends BaseLayer {
 	        	TCP.SendHeader.port_dst = 0x2091;
 	        	TCP.Send(ObjToByte(SendHeader));
 	        	
-	        	SendHeader.fapp_seq_num++;
+	        	SendHeader.seqNum++;
 	        	
 	        	((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(i+MAXLEN);
 
@@ -93,8 +93,8 @@ public class FileAppLayer extends BaseLayer {
 			IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 			IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
 			
-        	SendHeader.fapp_msg_type = DONE;
-        	SendHeader.fapp_data = new byte[] {1};
+        	SendHeader.msgType = DONE;
+        	SendHeader.data = new byte[] {1};
         	TCP.SendHeader.port_src = 0x2091;
         	TCP.SendHeader.port_dst = 0x2091;
         	TCP.Send(ObjToByte(SendHeader));
@@ -113,12 +113,12 @@ public class FileAppLayer extends BaseLayer {
         	if (input[idx++] == 0) {
         		byte[] data = new byte[MAXLEN];
 
-            	SendHeader.fapp_msg_type = DATA;
-            	SendHeader.fapp_totlen = length;
-            	SendHeader.fapp_seq_num = idx-1;
+            	SendHeader.msgType = DATA;
+            	SendHeader.totalLen = length;
+            	SendHeader.seqNum = idx-1;
 
             	System.arraycopy(fileData, i, data, 0, MAXLEN);
-            	SendHeader.fapp_data = Arrays.copyOf(data, MAXLEN);	
+            	SendHeader.data = Arrays.copyOf(data, MAXLEN);
             	
     			IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
     			IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
@@ -141,8 +141,8 @@ public class FileAppLayer extends BaseLayer {
 		IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 		IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
 		
-    	SendHeader.fapp_msg_type = DONE;
-    	SendHeader.fapp_data = new byte[] {1};
+    	SendHeader.msgType = DONE;
+    	SendHeader.data = new byte[] {1};
     	TCP.SendHeader.port_src = 0x2091;
     	TCP.SendHeader.port_dst = 0x2091;
     	TCP.Send(ObjToByte(SendHeader));
@@ -156,50 +156,50 @@ public class FileAppLayer extends BaseLayer {
         if (input == null) return true;
         
         if (fragBytes == null) {
-        	fragBytes = new byte[RecvHeader.fapp_totlen];
-        	fragCheck = new byte[(int) Math.ceil(RecvHeader.fapp_totlen/MAXLEN)+1];
+        	fragBytes = new byte[RecvHeader.totalLen];
+        	fragCheck = new byte[(int) Math.ceil(RecvHeader.totalLen /MAXLEN)+1];
         	totalBytes = 0;
         }
             
-        if (RecvHeader.fapp_msg_type == RESEND) {
-        	this.reSend(RecvHeader.fapp_data);
+        if (RecvHeader.msgType == RESEND) {
+        	this.reSend(RecvHeader.data);
         }
         
-        if (RecvHeader.fapp_msg_type == DONE_OK) {
+        if (RecvHeader.msgType == DONE_OK) {
         	((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(0);
         	fragBytes = null;
             totalBytes = 0;
             fileName = null;
         }
 
-        if (RecvHeader.fapp_msg_type == INFO) {
+        if (RecvHeader.msgType == INFO) {
         	
         	System.out.println("파일 헤더 받음");
         	
-        	fileName = new String(RecvHeader.fapp_data);
+        	fileName = new String(RecvHeader.data);
         	String newChat = "[FILE RECV " + fileName + "]";
         	
             ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setMinimum(0);
-            ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setMaximum(RecvHeader.fapp_totlen);
+            ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setMaximum(RecvHeader.totalLen);
             ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(0);
             
         	GetUpperLayer(0).Receive(newChat.getBytes());
         	return true;
         }
         
-        if (RecvHeader.fapp_msg_type == DATA) {
+        if (RecvHeader.msgType == DATA) {
         	
-            int offset = (RecvHeader.fapp_seq_num) * MAXLEN ;
+            int offset = (RecvHeader.seqNum) * MAXLEN ;
 
-            fragCheck[RecvHeader.fapp_seq_num] = 1;
-        	totalBytes += RecvHeader.fapp_data.length;
+            fragCheck[RecvHeader.seqNum] = 1;
+        	totalBytes += RecvHeader.data.length;
         	((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(totalBytes);
         	
-        	System.arraycopy(RecvHeader.fapp_data, 0, fragBytes, offset, RecvHeader.fapp_data.length);
+        	System.arraycopy(RecvHeader.data, 0, fragBytes, offset, RecvHeader.data.length);
         	
-        	System.out.println(totalBytes + "/" + RecvHeader.fapp_totlen);
+        	System.out.println(totalBytes + "/" + RecvHeader.totalLen);
 
-        	if (RecvHeader.fapp_totlen <= totalBytes) {
+        	if (RecvHeader.totalLen <= totalBytes) {
         		System.out.println("파일 다 받음");
 
         	    try{
@@ -221,8 +221,8 @@ public class FileAppLayer extends BaseLayer {
         		IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
         		IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
         		
-            	SendHeader.fapp_msg_type = DONE_OK;
-            	SendHeader.fapp_data = new byte[] {1};
+            	SendHeader.msgType = DONE_OK;
+            	SendHeader.data = new byte[] {1};
             	
             	TCPLayer TCP = (TCPLayer) GetUnderLayer(0);   
             	TCP.SendHeader.port_src = 0x2091;
@@ -233,11 +233,11 @@ public class FileAppLayer extends BaseLayer {
             return true;
         }
         
-        if (RecvHeader.fapp_msg_type == DONE) { 
-        	if (RecvHeader.fapp_totlen > totalBytes && totalBytes != 0) { // 재전송
-            	SendHeader.fapp_msg_type = RESEND;
-            	SendHeader.fapp_totlen = RecvHeader.fapp_totlen;
-            	SendHeader.fapp_data = fragCheck;
+        if (RecvHeader.msgType == DONE) {
+        	if (RecvHeader.totalLen > totalBytes && totalBytes != 0) { // 재전송
+            	SendHeader.msgType = RESEND;
+            	SendHeader.totalLen = RecvHeader.totalLen;
+            	SendHeader.data = fragCheck;
             	
             	IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 				IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());

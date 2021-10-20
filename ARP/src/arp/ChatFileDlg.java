@@ -103,6 +103,13 @@ public class ChatFileDlg extends BaseLayer {
 		jframe.setTitle("CHAT & FILE TRANSFER");
 		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jframe.setBounds(250, 250, 644, 425);
+		jframe.addWindowListener(new java.awt.event.WindowAdapter() {
+			@Override
+			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+				NILayer.exitProgram = true;
+				System.exit(0);
+			}
+		});
 		contentPane = new JPanel();
 		((JComponent) contentPane).setBorder(new EmptyBorder(5, 5, 5, 5));
 		jframe.setContentPane(contentPane);

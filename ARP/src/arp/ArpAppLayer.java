@@ -4,31 +4,22 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.StringTokenizer;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
-
-import org.jnetpcap.Pcap;
-
-import arp.BaseLayer.ARP_HEADER;
-import arp.ChatFileDlg.setAddressListener;
 
 public class ArpAppLayer extends BaseLayer{
 	
@@ -216,17 +207,10 @@ public class ArpAppLayer extends BaseLayer{
 					//entry 추가
 					String inputIp = proxyEntryIp.getText().trim();
 					String inputMac = proxyEntryMac.getText().trim();
+
+					byte[] byteIp = StrToIp(inputIp);
 					
-					InetAddress ip = null;
-					try {
-						ip = InetAddress.getByName(inputIp);
-					} catch (UnknownHostException e1) {
-						// TODO 자동 생성된 catch 블록
-						e1.printStackTrace();
-					}
-					byte[] byteIp = ip.getAddress();
-					
-					byte[] byteMac = macStringToByte(inputMac);
+					byte[] byteMac = StrToMac(inputMac);
 					ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
 					
 					arpLayer.addProxy(byteIp, byteMac);
@@ -335,7 +319,7 @@ public class ArpAppLayer extends BaseLayer{
 			/*----- GARP Action -----*/
 			else if(e.getSource() == GARPSend) {
 				//GARP Send버튼을 눌렀을 때
-				byte[] mac = macStringToByte(GARPTextField.getText());
+				byte[] mac = StrToMac(GARPTextField.getText());
 				
 				IPLayer IP = (IPLayer)m_LayerMgr.GetLayer("IP");
 
@@ -366,36 +350,6 @@ public class ArpAppLayer extends BaseLayer{
 		return MacAddress;
 	}
 
-	public byte[] macStringToByte(String mac) {
-		// string mac 주소는 "00:00:00:00:00:00" 형태
-		byte[] ret = new byte[6];
-
-		StringTokenizer tokens = new StringTokenizer(mac, ":");
-
-		for (int i = 0; tokens.hasMoreElements(); i++) {
-
-			String temp = tokens.nextToken();
-
-			try {
-				ret[i] = Byte.parseByte(temp, 16);
-			} catch (NumberFormatException e) {
-				int minus = (Integer.parseInt(temp, 16)) - 256;
-				ret[i] = (byte) (minus);
-			}
-		}
-
-		return ret;
-	}
-	
-	public String ipByteToString(byte[] stringIP) {
-		String result = "";
-		for(byte raw : stringIP){
-			result += raw & 0xFF;
-			result += ".";
-		}
-		return result.substring(0, result.length()-1);		
-	}
-	
 	public void updateARPCacheTable(ArrayList<ARP_CACHE> cache_table) {
 		// GUI에 cache table 업데이트
 		//ip주소를 string으로 변환 필요
@@ -415,7 +369,7 @@ public class ArpAppLayer extends BaseLayer{
     		ARP_CACHE cache = iter.next();
     		String[] row = new String[3];
     		
-    		row[0] = ipByteToString(cache.ip);
+    		row[0] = IpToStr(cache.ip);
     		if(cache.status == false) {
     			row[1] = "??????????";
     			row[2] = "incomplete";
@@ -443,7 +397,7 @@ public class ArpAppLayer extends BaseLayer{
     		Proxy proxy = iter.next();
     		String[] row = new String[2];
     		
-    		row[0] = ipByteToString(proxy.ip);
+    		row[0] = IpToStr(proxy.ip);
     		row[1] = macByteToString(proxy.mac);
     		
     		proxyModel.addRow(row);

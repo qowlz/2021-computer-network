@@ -58,20 +58,19 @@ public class ARPLayer extends BaseLayer{
 		ARP_CACHE tempARP = getCache(RecvHeader.ip_src);
 		if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
 
+		if(tempARP == null) { // 캐시테이블 미적중
+			ARP_CACHE arpCache = new ARP_CACHE(RecvHeader.ip_src, RecvHeader.mac_src, true);
+			addCacheTable(arpCache); // 새로 만들어서 추가
+		}else {  // 캐시테이블 적중
+			tempARP.status = true;
+			tempARP.mac = Arrays.copyOf(RecvHeader.mac_src, 6); // 수신받은 데이터의 송신지로 덮어쓰기
+		}
+		updateCacheTable();
+
 		switch (RecvHeader.opcode) { // arp 패킷 옵코드로 분류
 		case 0x01: // request
 
-			// 요청이 오면 일단 저장
-			if(tempARP == null) { // 캐시테이블 미적중
-				ARP_CACHE arpCache = new ARP_CACHE(RecvHeader.ip_src, RecvHeader.mac_src, true);
-				addCacheTable(arpCache);
-			}else {  // 캐시테이블 적중
-				tempARP.status = true;
-				tempARP.mac = Arrays.copyOf(RecvHeader.mac_src, 6);
-			}
-			updateCacheTable();
-
-			if(Arrays.equals(RecvHeader.ip_dst, ipAddress)) {	// 수신지가 본인이면 
+			if(Arrays.equals(RecvHeader.ip_dst, ipAddress)) {	// 수신지가 본인이면
 				SendHeader.opcode = 0x02; // reply
 				SendHeader.ip_dst = Arrays.copyOf(RecvHeader.ip_src,4); // 수신지를 목적지로
 				SendHeader.mac_dst = Arrays.copyOf(RecvHeader.mac_src,6); // 수신지를 목적지로
@@ -81,7 +80,7 @@ public class ARPLayer extends BaseLayer{
 
 			}else{ // 목적지가 자신이 아닌경우 프록시 찾기
 				Iterator<Proxy> iter = proxyEntry.iterator();
-				
+
 				while(iter.hasNext()) {
 					Proxy proxy = iter.next();
 					if(Arrays.equals(RecvHeader.ip_dst,  proxy.ip)) { // 프록시에 존재하면
@@ -90,7 +89,7 @@ public class ARPLayer extends BaseLayer{
 						SendHeader.mac_dst = Arrays.copyOf(RecvHeader.mac_src,6);
 						SendHeader.mac_src = macAddress; // 맥은 본인 pc로
 						SendHeader.ip_src = Arrays.copyOf(proxy.ip, 4); // 송신지 ip 프록시 ip로 지정
-						GetUnderLayer(0).Send(ObjToByte(SendHeader)); 
+						GetUnderLayer(0).Send(ObjToByte(SendHeader));
 						break;
 					}
 				}
@@ -98,21 +97,10 @@ public class ARPLayer extends BaseLayer{
 			}
 			break;
 		case 0x02: // reply
-
 			System.out.println("ARP 응답 수신");
-			// 수신
-			if(tempARP == null) { // 캐시테이블 미적중
-				ARP_CACHE arpCache = new ARP_CACHE(RecvHeader.ip_src, RecvHeader.mac_src, true);
-				addCacheTable(arpCache);
-			}else {  // 캐시테이블 적중
-				tempARP.status = true;
-				tempARP.mac = Arrays.copyOf(RecvHeader.mac_src, 6);
-			}
-			
-			updateCacheTable();
+			// 수신 완료
 			break;
 		}
-			
 		return true;
 	}
 

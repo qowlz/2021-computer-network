@@ -214,7 +214,7 @@ public class ArpAppLayer extends BaseLayer{
 
 				byte[] dstIP = StrToIp(inputIP);
 				
-				IPLayer IP = (IPLayer)m_LayerMgr.GetLayer("IP");
+				IPLayer IP = (IPLayer) layerManager.GetLayer("IP");
 				IP.SendHeader.ip_dst = Arrays.copyOf(dstIP, 4);
 							
 				TCPLayer tcpLayer = (TCPLayer)GetUnderLayer(0);
@@ -223,7 +223,7 @@ public class ArpAppLayer extends BaseLayer{
 				IPTextField.setText("");
 			}else if(e.getSource() == ARPItemDelete) {
 				//ItemDelete 버튼을 눌렀을 때
-				ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
+				ARPLayer arpLayer = (ARPLayer) layerManager.GetLayer("ARP");
 				int selectRow = ARPTable.getSelectedRow();
 				if(selectRow == -1) {
 					return;
@@ -235,14 +235,14 @@ public class ArpAppLayer extends BaseLayer{
 				}
 			}else if(e.getSource() == ARPAllDelete) {
 				//AllDelete 버튼
-				ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
+				ARPLayer arpLayer = (ARPLayer) layerManager.GetLayer("ARP");
 				arpLayer.cacheRemoveAll();
 			}else if(e.getSource() == ProxyAdd) {
 				//Add 버튼
 				new proxyWindow();
 			}else if(e.getSource() == ProxyDelete) {
 				//Delete 버튼
-				ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
+				ARPLayer arpLayer = (ARPLayer) layerManager.GetLayer("ARP");
 				
 				int selectRow = ProxyTable.getSelectedRow();
 				if(selectRow == -1) {
@@ -257,13 +257,13 @@ public class ArpAppLayer extends BaseLayer{
 				//GARPSend 버튼
 				byte[] mac = StrToMac(GARPTextField.getText());
 				
-				IPLayer IP = (IPLayer)m_LayerMgr.GetLayer("IP");
+				IPLayer IP = (IPLayer) layerManager.GetLayer("IP");
 
 				BaseLayer.macAddress = mac;
 				
 				IP.SendHeader.ip_dst = ipAddress;
 				
-				TCPLayer tcpLayer = (TCPLayer)m_LayerMgr.GetLayer("TCP");
+				TCPLayer tcpLayer = (TCPLayer) layerManager.GetLayer("TCP");
 				tcpLayer.Send(new byte[0]);
 				
 				GARPTextField.setText("");

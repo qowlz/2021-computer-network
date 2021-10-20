@@ -100,7 +100,7 @@ public abstract class BaseLayer {
 	
 	public ArrayList<BaseLayer> p_aUnderLayer = new ArrayList<BaseLayer>();
 	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
-	public static LayerManager m_LayerMgr = new LayerManager();
+	public static LayerManager layerManager = new LayerManager();
 	
 	public String pLayerName = null;
 	

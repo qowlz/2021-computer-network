@@ -38,7 +38,7 @@ public class ChatAppLayer extends BaseLayer{
 	        	System.arraycopy(input, i, data, 0, left_packet);
 	        	SendHeader.data = Arrays.copyOf(data, left_packet);
 	        	
-				IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
+				IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 				IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
 	        	
 	            TCPLayer TCP = (TCPLayer) GetUnderLayer(0);

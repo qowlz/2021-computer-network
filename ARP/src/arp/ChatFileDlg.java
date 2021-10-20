@@ -29,7 +29,31 @@ import org.jnetpcap.Pcap;
 import org.jnetpcap.PcapIf;
 
 public class ChatFileDlg extends BaseLayer {
+	/**
+	 * 파일 전송 쓰레드
+	 */
+	class FileSendThread implements Runnable{
+		FileAppLayer FileLayer;
+		byte[] data;
+		int length;
+		String name;
+		public FileSendThread(FileAppLayer layer, File file) {
+			this.FileLayer = layer;
+			try {
+				this.data = Files.readAllBytes(file.toPath());
+			} catch (IOException e) {}
 
+			this.name = file.getName();
+			this.length = data.length;
+		}
+
+		@Override
+		public void run() {
+			FileLayer.Send(this.data, this.length, this.name);
+		}
+	}
+
+	// UI Components
 	private JFrame jframe;
 	private Container contentPane;
 	private JTextField ChattingInput;
@@ -44,9 +68,8 @@ public class ChatFileDlg extends BaseLayer {
 	private JButton FileSendButton;
 	private JPanel FileTransferPanel;
 	private JPanel FilePathPanel;
-	
-	JTextArea dstIpAddress;
-	JProgressBar progressBar;
+	public JTextArea dstIpAddress;
+	public JProgressBar progressBar;
 	
 	private File file;
 	private static JComboBox<String> NICComboBox;
@@ -55,22 +78,22 @@ public class ChatFileDlg extends BaseLayer {
 	
 	public static void main(String[] args) {
 
-		m_LayerMgr.AddLayer(new NILayer("NI"));
-		m_LayerMgr.AddLayer(new EthernetLayer("Ethernet"));
-		m_LayerMgr.AddLayer(new ARPLayer("ARP"));
-		m_LayerMgr.AddLayer(new ArpAppLayer("ARPGUI"));
-		m_LayerMgr.AddLayer(new IPLayer("IP"));
-		m_LayerMgr.AddLayer(new TCPLayer("TCP"));
-		m_LayerMgr.AddLayer(new ChatFileDlg("ChatFileGUI"));
-		m_LayerMgr.AddLayer(new FileAppLayer("File"));
-		m_LayerMgr.AddLayer(new ChatAppLayer("Chat"));
-		
-		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *IP ( *TCP ( *Chat ( *ChatFileGUI ) *File ( *ChatFileGUI ) *ARPGUI ) ) ) *IP ) )");
+		// 전체 레이어 생성 및 연결
+		layerManager.AddLayer(new NILayer("NI"));
+		layerManager.AddLayer(new EthernetLayer("Ethernet"));
+		layerManager.AddLayer(new ARPLayer("ARP"));
+		layerManager.AddLayer(new ArpAppLayer("ARPGUI"));
+		layerManager.AddLayer(new IPLayer("IP"));
+		layerManager.AddLayer(new TCPLayer("TCP"));
+		layerManager.AddLayer(new ChatFileDlg("ChatFileGUI"));
+		layerManager.AddLayer(new FileAppLayer("File"));
+		layerManager.AddLayer(new ChatAppLayer("Chat"));
+		layerManager.ConnectLayers(" NI ( *Ethernet ( *ARP ( *IP ( *TCP ( *Chat ( *ChatFileGUI ) *File ( *ChatFileGUI ) *ARPGUI ) ) ) *IP ) )");
 
-		((IPLayer)m_LayerMgr.GetLayer("IP")).RunTimerTask(1000);
+		((IPLayer) layerManager.GetLayer("IP")).RunTimerTask(1000);
 
-		ARPLayer ARP = (ARPLayer) m_LayerMgr.GetLayer("ARP");		
-		ARP.setArpAppLayer((ArpAppLayer) m_LayerMgr.GetLayer("ARPGUI"));
+		ARPLayer ARP = (ARPLayer) layerManager.GetLayer("ARP");
+		ARP.setArpAppLayer((ArpAppLayer) layerManager.GetLayer("ARPGUI"));
 	}
 
 	public ChatFileDlg(String pName) {
@@ -158,32 +181,29 @@ public class ChatFileDlg extends BaseLayer {
 		NICComboBox.setBounds(10, 49, 170, 20);
 		settingPanel.add(NICComboBox);
 
-		NILayer NI = (NILayer) m_LayerMgr.GetLayer("NI");
+		NILayer NI = (NILayer) layerManager.GetLayer("NI");
 		for (PcapIf pcapIf : NI.getAdapterList()){
 			NICComboBox.addItem(pcapIf.getName()); // 어댑터List 추가
 		}
 
-		NICComboBox.addActionListener(new ActionListener() { // ComboBox 이벤트 처리
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JComboBox jcombo = (JComboBox) e.getSource();
-				adapterNumber = jcombo.getSelectedIndex();
-				
-				NI.setDevice(adapterNumber, 65536, Pcap.MODE_PROMISCUOUS, 10 * 1000);
+		// ComboBox 이벤트 처리
+		NICComboBox.addActionListener(e -> {
+			JComboBox jcombo = (JComboBox) e.getSource();
+			adapterNumber = jcombo.getSelectedIndex();
 
-				srcIpAddress.setText(IpToStr(ipAddress));
-				
-			}
+			NI.setDevice(adapterNumber, 65536, Pcap.MODE_PROMISCUOUS, 10 * 1000);
+
+			srcIpAddress.setText(IpToStr(ipAddress));
 		});
 
 		SettingButton = new JButton("Setting");
-		SettingButton.setBounds(80, 270, 100, 20);
-		SettingButton.addActionListener(new setAddressListener());
+		SettingButton.setBounds(10, 250, 100, 20);
+		SettingButton.addActionListener(new UIEventListener());
 		settingPanel.add(SettingButton);// setting
 
 		ChatSendButton = new JButton("Send");
 		ChatSendButton.setBounds(270, 230, 80, 20);
-		ChatSendButton.addActionListener(new setAddressListener());
+		ChatSendButton.addActionListener(new UIEventListener());
 		chattingPanel.add(ChatSendButton);
 		
 		FileTransferPanel = new JPanel();
@@ -206,7 +226,7 @@ public class ChatFileDlg extends BaseLayer {
 
 		FileSelectButton = new JButton("File...");
 		FileSelectButton.setBounds(270, 20, 80, 20);
-		FileSelectButton.addActionListener(new setAddressListener());
+		FileSelectButton.addActionListener(new UIEventListener());
 		FileTransferPanel.add(FileSelectButton);
 
 		this.progressBar = new JProgressBar(0, 100);
@@ -217,14 +237,13 @@ public class ChatFileDlg extends BaseLayer {
 		FileSendButton = new JButton("Send");
 		FileSendButton.setEnabled(false);
 		FileSendButton.setBounds(270, 50, 80, 20);
-		FileSendButton.addActionListener(new setAddressListener());
+		FileSendButton.addActionListener(new UIEventListener());
 		FileTransferPanel.add(FileSendButton);
 
 		jframe.setVisible(true);
-
 	}
 
-	class setAddressListener implements ActionListener {
+	class UIEventListener implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 
@@ -237,17 +256,17 @@ public class ChatFileDlg extends BaseLayer {
 					SettingButton.setText("Setting"); // Setting 상태로 설정
 					srcIpAddress.setEnabled(true);  // 변경 가능
 					dstIpAddress.setEnabled(true);  // 변경 가능
-					
-				}  
+
+				}
 				else { // Setting 상태에 클릭
 
-					NILayer NI = (NILayer) m_LayerMgr.GetLayer("NI");
+					NILayer NI = (NILayer) layerManager.GetLayer("NI");
 					NI.Receive(); // Receive Thread 실행
 
 					SettingButton.setText("Reset"); // Reset 상태로 변경
 					srcIpAddress.setEnabled(false);  // 변경 불가
 					dstIpAddress.setEnabled(false);  // 변경 불가
-				} 
+				}
 			}
 
 			if (e.getSource() == ChatSendButton) { // Chat send
@@ -258,14 +277,14 @@ public class ChatFileDlg extends BaseLayer {
 					try {
 						bytes = input.getBytes("UTF-8"); // UTF-8 인코딩으로 Byte array 변환
 					} catch (UnsupportedEncodingException e1) {
-					} 
-					IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
+					}
+					IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 
 					IP.SendHeader.ip_dst = StrToIp(dstIpAddress.getText());
 
 					((ChatAppLayer)GetUnderLayer(0)).Send(bytes, (short)(bytes.length));
 					// byte array로 변환된 입력 String과 byte array의 길이를 Chat App Layer로 전송
-					ChattingInput.setText(""); 
+					ChattingInput.setText("");
 					// 입력칸 초기화
 				} else {
 					JOptionPane.showMessageDialog(null, "Address Setting Error!.");// IP 설정이 안된 상태
@@ -281,50 +300,28 @@ public class ChatFileDlg extends BaseLayer {
 					FileUrl.setEnabled(false);
 					FileSendButton.setEnabled(true);
 					progressBar.setValue(0);
-					
+
 		        	String newChat = "[FILE SEND " + file.getName() + "]\n";
-		        	
+
 		        	ChattingArea.append(newChat);
 				}
 			}
-			
+
 			if(e.getSource() == FileSendButton){
-				IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));			
+				IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 				IP.SendHeader.ip_dst = StrToIp(dstIpAddress.getText());
-				
-				FileAppLayer FAlayer = (FileAppLayer)m_LayerMgr.GetLayer("File");
-				FileSend_Thread FST = new FileSend_Thread(FAlayer, file);
+
+				FileAppLayer FAlayer = (FileAppLayer) layerManager.GetLayer("File");
+				FileSendThread FST = new FileSendThread(FAlayer, file);
 				Thread Send_Thread = new Thread(FST);
 				Send_Thread.start();
 			}
 		}
 	}
-	
-	class FileSend_Thread implements Runnable{
-		FileAppLayer FileLayer;
-		File file;
-		byte[] data;
-		int length;
-		String name;
-		public FileSend_Thread(FileAppLayer layer, File file) {	
-			this.FileLayer = layer;
-			try {
-				this.data = Files.readAllBytes(file.toPath());
-			} catch (IOException e) {}
-			
-			this.name = file.getName();
-			this.length = data.length;
-		}
-		
-		@Override
-		public void run() {
-			FileLayer.Send(this.data, this.length, this.name);
-		}
-	}
 
 	public boolean Receive(byte[] input) { // Chat Receive
 		if (input != null) {
-			
+
 			byte[] data = input;   //byte chat input data
 			try {
 				Text = new String(data, "UTF-8");
@@ -333,11 +330,10 @@ public class ChatFileDlg extends BaseLayer {
 				e.printStackTrace();
 			}
 
-			ChattingArea.append("[RECV] : " + Text + "\n"); // ChattingArea에 추
+			ChattingArea.append("[RECV] : " + Text + "\n"); // ChattingArea에 추가
 
 			return false;
 		}
 		return false ;
 	}
-
 }

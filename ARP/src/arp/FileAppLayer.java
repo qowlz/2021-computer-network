@@ -53,7 +53,7 @@ public class FileAppLayer extends BaseLayer {
         	SendHeader.fapp_msg_type = DATA;
         	SendHeader.fapp_data = Arrays.copyOf(input, length);
             
-			IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
+			IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 			IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
 			
         	TCP.SendHeader.port_src = 0x2091;
@@ -70,7 +70,7 @@ public class FileAppLayer extends BaseLayer {
 	        	System.arraycopy(input, i, data, 0, left_packet);
 	        	SendHeader.fapp_data = Arrays.copyOf(data, left_packet);	
 	        	
-				IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
+				IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 				IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
 	        	
 	        	TCP.SendHeader.port_src = 0x2091;
@@ -90,7 +90,7 @@ public class FileAppLayer extends BaseLayer {
 	        }
 	        
 
-			IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
+			IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 			IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
 			
         	SendHeader.fapp_msg_type = DONE;
@@ -120,7 +120,7 @@ public class FileAppLayer extends BaseLayer {
             	System.arraycopy(fileData, i, data, 0, MAXLEN);
             	SendHeader.fapp_data = Arrays.copyOf(data, MAXLEN);	
             	
-    			IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
+    			IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
     			IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
             	
             	TCP.SendHeader.port_src = 0x2091;
@@ -138,7 +138,7 @@ public class FileAppLayer extends BaseLayer {
         	}
         }
         
-		IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
+		IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 		IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
 		
     	SendHeader.fapp_msg_type = DONE;
@@ -218,7 +218,7 @@ public class FileAppLayer extends BaseLayer {
                 fileName = null;
                 ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(0);
                 
-        		IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
+        		IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
         		IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
         		
             	SendHeader.fapp_msg_type = DONE_OK;
@@ -239,7 +239,7 @@ public class FileAppLayer extends BaseLayer {
             	SendHeader.fapp_totlen = RecvHeader.fapp_totlen;
             	SendHeader.fapp_data = fragCheck;
             	
-            	IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
+            	IPLayer IP = ((IPLayer) layerManager.GetLayer("IP"));
 				IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
             	
             	TCPLayer TCP = (TCPLayer) GetUnderLayer(0);        	

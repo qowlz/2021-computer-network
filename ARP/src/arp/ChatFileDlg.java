@@ -18,7 +18,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
@@ -31,42 +30,30 @@ import org.jnetpcap.PcapIf;
 
 public class ChatFileDlg extends BaseLayer {
 
-	private JTextField ChattingWrite;
-
-	JFrame jframe;
+	private JFrame jframe;
+	private Container contentPane;
+	private JTextField ChattingInput;
+	private JTextArea ChattingArea;
+	private JTextArea srcIpAddress;
+	private JTextArea FileUrl;
+	private JLabel srcLabel;
+	private JLabel dstLabel;  
+	private JButton SettingButton;
+	private JButton ChatSendButton;
+	private JButton FileSelectButton;
+	private JButton FileSendButton;
+	private JPanel FileTransferPanel;
+	private JPanel FilePathPanel;
 	
-	Container contentPane;
-
-	JTextArea ChattingArea;
-	JTextArea srcIpAddress;
 	JTextArea dstIpAddress;
-
-	JLabel lblsrc;  // src label
-	JLabel lbldst;  // dst label
-
-	JButton Setting_Button;
-	JButton Chat_send_Button;
-
-	JButton FileSelectButton;
-	JButton FileSendButton;
-	JPanel FileTransferPanel;
-	JPanel FilePathPanel;
-	JTextArea FileUrl;
 	JProgressBar progressBar;
 	
-	File file;
-	
-	static JComboBox<String> NICComboBox;
-
-	int adapterNumber = 0;
-
-	String Text;
+	private File file;
+	private static JComboBox<String> NICComboBox;
+	private int adapterNumber = 0;
+	private String Text;
 	
 	public static void main(String[] args) {
-	
-//		/*과제
-//		// 흐름대로 레이어 연결해주는 부분.. 
-//		과제  */
 
 		m_LayerMgr.AddLayer(new NILayer("NI"));
 		m_LayerMgr.AddLayer(new EthernetLayer("Ethernet"));
@@ -98,36 +85,36 @@ public class ChatFileDlg extends BaseLayer {
 		jframe.setContentPane(contentPane);
 		contentPane.setLayout(null);
 
-		JPanel chattingPanel = new JPanel();// chatting panel
+		JPanel chattingPanel = new JPanel();
 		chattingPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "chatting",
 				TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
 		chattingPanel.setBounds(10, 5, 360, 276);
 		contentPane.add(chattingPanel);
 		chattingPanel.setLayout(null);
 
-		JPanel chattingEditorPanel = new JPanel();// chatting write panel
+		JPanel chattingEditorPanel = new JPanel();
 		chattingEditorPanel.setBounds(10, 15, 340, 210);
 		chattingPanel.add(chattingEditorPanel);
 		chattingEditorPanel.setLayout(null);
 	
 		ChattingArea = new JTextArea();
 		ChattingArea.setEditable(true);
-		ChattingArea.setBounds(10, 15, 340, 210);
-		chattingEditorPanel.add(ChattingArea);// chatting edit
+		ChattingArea.setBounds(0, 0, 340, 210);
+		chattingEditorPanel.add(ChattingArea);
 		ChattingArea.setLineWrap(true); // Auto new line
 
-		JPanel chattingInputPanel = new JPanel();// chatting write panel
+		JPanel chattingInputPanel = new JPanel();
 		chattingInputPanel.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		chattingInputPanel.setBounds(10, 230, 250, 20);
 		chattingPanel.add(chattingInputPanel);
 		chattingInputPanel.setLayout(null);
 
-		ChattingWrite = new JTextField();
-		ChattingWrite.setBounds(2, 2, 250, 20);// 249
-		chattingInputPanel.add(ChattingWrite);
-		ChattingWrite.setColumns(10);// writing area
+		ChattingInput = new JTextField();
+		ChattingInput.setBounds(2, 2, 250, 20);
+		chattingInputPanel.add(ChattingInput);
+		ChattingInput.setColumns(10);
 
-		JPanel settingPanel = new JPanel(); //Setting Panel
+		JPanel settingPanel = new JPanel();
 		settingPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "setting",
 				TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
 		settingPanel.setBounds(380, 5, 236, 371);
@@ -140,14 +127,14 @@ public class ChatFileDlg extends BaseLayer {
 		settingPanel.add(sourceAddressPanel);
 		sourceAddressPanel.setLayout(null);
 
-		lblsrc = new JLabel("Source IP Address");
-		lblsrc.setBounds(10, 115, 170, 20);
-		settingPanel.add(lblsrc); // src 라벨 추가
+		srcLabel = new JLabel("Source IP Address");
+		srcLabel.setBounds(10, 115, 170, 20);
+		settingPanel.add(srcLabel);
 
 		srcIpAddress = new JTextArea();
 		srcIpAddress.setBounds(2, 2, 170, 20); 
 		srcIpAddress.setEditable(false);
-		sourceAddressPanel.add(srcIpAddress);// src address
+		sourceAddressPanel.add(srcIpAddress);
 
 		JPanel destinationAddressPanel = new JPanel();
 		destinationAddressPanel.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
@@ -155,13 +142,13 @@ public class ChatFileDlg extends BaseLayer {
 		settingPanel.add(destinationAddressPanel);
 		destinationAddressPanel.setLayout(null);
 
-		lbldst = new JLabel("Destination IP Address");
-		lbldst.setBounds(10, 187, 190, 20);
-		settingPanel.add(lbldst);
+		dstLabel = new JLabel("Destination IP Address");
+		dstLabel.setBounds(10, 187, 190, 20);
+		settingPanel.add(dstLabel);
 
 		dstIpAddress = new JTextArea();
 		dstIpAddress.setBounds(2, 2, 170, 20);
-		destinationAddressPanel.add(dstIpAddress);// dst address
+		destinationAddressPanel.add(dstIpAddress);
 
 		JLabel NICLabel = new JLabel("NIC List");
 		NICLabel.setBounds(10, 20, 170, 20);
@@ -173,15 +160,12 @@ public class ChatFileDlg extends BaseLayer {
 
 		NILayer NI = (NILayer) m_LayerMgr.GetLayer("NI");
 		for (PcapIf pcapIf : NI.getAdapterList()){
-			NICComboBox.addItem(pcapIf.getName()); // NIC 콤보 박스에 탐색한 네트워크 어댑터들을 추가
+			NICComboBox.addItem(pcapIf.getName()); // 어댑터List 추가
 		}
 
-		NICComboBox.addActionListener(new ActionListener() { // ComboBox 이벤트 발생
-
+		NICComboBox.addActionListener(new ActionListener() { // ComboBox 이벤트 처리
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-				//adapterNumber = NICComboBox.getSelectedIndex();
 				JComboBox jcombo = (JComboBox) e.getSource();
 				adapterNumber = jcombo.getSelectedIndex();
 				
@@ -192,24 +176,24 @@ public class ChatFileDlg extends BaseLayer {
 			}
 		});
 
-		Setting_Button = new JButton("Setting");// setting
-		Setting_Button.setBounds(80, 270, 100, 20);
-		Setting_Button.addActionListener(new setAddressListener());
-		settingPanel.add(Setting_Button);// setting
+		SettingButton = new JButton("Setting");
+		SettingButton.setBounds(80, 270, 100, 20);
+		SettingButton.addActionListener(new setAddressListener());
+		settingPanel.add(SettingButton);// setting
 
-		Chat_send_Button = new JButton("Send");
-		Chat_send_Button.setBounds(270, 230, 80, 20);
-		Chat_send_Button.addActionListener(new setAddressListener());
-		chattingPanel.add(Chat_send_Button);// chatting send button
+		ChatSendButton = new JButton("Send");
+		ChatSendButton.setBounds(270, 230, 80, 20);
+		ChatSendButton.addActionListener(new setAddressListener());
+		chattingPanel.add(ChatSendButton);
 		
-		FileTransferPanel = new JPanel();// setting�쓣 �쐞�븳 �쐞移� 吏��젙
+		FileTransferPanel = new JPanel();
 		FileTransferPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "File Transfer",
 				TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
 		FileTransferPanel.setBounds(10, 285, 360, 90);
 		contentPane.add(FileTransferPanel);
 		FileTransferPanel.setLayout(null);
 
-		FilePathPanel = new JPanel();// chatting write panel
+		FilePathPanel = new JPanel();
 		FilePathPanel.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		FilePathPanel.setBounds(10, 20, 250, 20);
 		FileTransferPanel.add(FilePathPanel);
@@ -218,12 +202,12 @@ public class ChatFileDlg extends BaseLayer {
 		FileUrl = new JTextArea();
 		FileUrl.setEditable(false);
 		FileUrl.setBounds(2, 2, 250, 20);
-		FilePathPanel.add(FileUrl);// chatting edit
+		FilePathPanel.add(FileUrl);
 
 		FileSelectButton = new JButton("File...");
 		FileSelectButton.setBounds(270, 20, 80, 20);
 		FileSelectButton.addActionListener(new setAddressListener());
-		FileTransferPanel.add(FileSelectButton);// chatting send button
+		FileTransferPanel.add(FileSelectButton);
 
 		this.progressBar = new JProgressBar(0, 100);
 		this.progressBar.setBounds(10, 50, 250, 20);
@@ -244,13 +228,13 @@ public class ChatFileDlg extends BaseLayer {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 
-			if (e.getSource() == Setting_Button) { //setting 버튼 이벤트
+			if (e.getSource() == SettingButton) { //setting 버튼 이벤트
 
-				if (Setting_Button.getText() == "Reset") { // Reset 상태에서 클릭
+				if (SettingButton.getText() == "Reset") { // Reset 상태에서 클릭
 					srcIpAddress.setText("");
 					dstIpAddress.setText("");  // src, dst IP 초기화
 
-					Setting_Button.setText("Setting"); // Setting 상태로 설정
+					SettingButton.setText("Setting"); // Setting 상태로 설정
 					srcIpAddress.setEnabled(true);  // 변경 가능
 					dstIpAddress.setEnabled(true);  // 변경 가능
 					
@@ -260,15 +244,15 @@ public class ChatFileDlg extends BaseLayer {
 					NILayer NI = (NILayer) m_LayerMgr.GetLayer("NI");
 					NI.Receive(); // Receive Thread 실행
 
-					Setting_Button.setText("Reset"); // Reset 상태로 변경
+					SettingButton.setText("Reset"); // Reset 상태로 변경
 					srcIpAddress.setEnabled(false);  // 변경 불가
 					dstIpAddress.setEnabled(false);  // 변경 불가
 				} 
 			}
 
-			if (e.getSource() == Chat_send_Button) { // Chat send
-				if (Setting_Button.getText() == "Reset") { // Src dst 가 설정된 상태
-					String input = ChattingWrite.getText(); // 입력칸의 Text
+			if (e.getSource() == ChatSendButton) { // Chat send
+				if (SettingButton.getText() == "Reset") { // Src dst 가 설정된 상태
+					String input = ChattingInput.getText(); // 입력칸의 Text
 					ChattingArea.append("[SEND] : " + input + "\n"); //  ChattingArea에 추가
 					byte[] bytes = null;
 					try {
@@ -281,7 +265,7 @@ public class ChatFileDlg extends BaseLayer {
 
 					((ChatAppLayer)GetUnderLayer(0)).Send(bytes, (short)(bytes.length));
 					// byte array로 변환된 입력 String과 byte array의 길이를 Chat App Layer로 전송
-					ChattingWrite.setText(""); 
+					ChattingInput.setText(""); 
 					// 입력칸 초기화
 				} else {
 					JOptionPane.showMessageDialog(null, "Address Setting Error!.");// IP 설정이 안된 상태
@@ -309,20 +293,20 @@ public class ChatFileDlg extends BaseLayer {
 				IP.SendHeader.ip_dst = StrToIp(dstIpAddress.getText());
 				
 				FileAppLayer FAlayer = (FileAppLayer)m_LayerMgr.GetLayer("File");
-				File_Send_Thread FST = new File_Send_Thread(FAlayer, file);
+				FileSend_Thread FST = new FileSend_Thread(FAlayer, file);
 				Thread Send_Thread = new Thread(FST);
 				Send_Thread.start();
 			}
 		}
 	}
 	
-	class File_Send_Thread implements Runnable{
+	class FileSend_Thread implements Runnable{
 		FileAppLayer FileLayer;
 		File file;
 		byte[] data;
 		int length;
 		String name;
-		public File_Send_Thread(FileAppLayer layer, File file) {	
+		public FileSend_Thread(FileAppLayer layer, File file) {	
 			this.FileLayer = layer;
 			try {
 				this.data = Files.readAllBytes(file.toPath());

@@ -234,9 +234,9 @@ public class ArpAppLayer extends BaseLayer{
 	class btnListener implements ActionListener{
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			/*----ARP Action-----*/
+
 			if(e.getSource() == ARP_IPSend) {
-				//IP 입력 후 send버튼 눌렀을 때
+				//IPSend버튼 눌렀을 때
 				String inputIP = IPTextField.getText().trim();
 
 				byte[] dstIP = StrToIp(inputIP);
@@ -246,8 +246,6 @@ public class ArpAppLayer extends BaseLayer{
 							
 				TCPLayer tcpLayer = (TCPLayer)GetUnderLayer(0);
 				tcpLayer.Send(new byte[0]);
-				
-				//arpLayer.Send(new byte[0], 0);
 
 				IPTextField.setText("");
 			}
@@ -268,19 +266,19 @@ public class ArpAppLayer extends BaseLayer{
 			}
 			
 			else if(e.getSource() == ARPAllDelete) {
-				//AllDelete 버튼을 눌렀을 때
+				//AllDelete 버튼
 				ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
 				arpLayer.cacheRemoveAll();
 			}
 			
-			/*----- Proxy Action -----*/
+
 			else if(e.getSource() == ProxyAdd) {
-				//Add 버튼을 눌렀을 때
+				//Add 버튼
 				new proxyWindow();
 			}
 			
 			else if(e.getSource() == ProxyDelete) {
-				//Delete 버튼을 눌렀을 때
+				//Delete 버튼
 				ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
 				
 				int selectRow = ProxyTable.getSelectedRow();
@@ -295,9 +293,8 @@ public class ArpAppLayer extends BaseLayer{
 				}
 			}
 			
-			/*----- GARP Action -----*/
 			else if(e.getSource() == GARPSend) {
-				//GARP Send버튼을 눌렀을 때
+				//GARPSend 버튼
 				byte[] mac = StrToMac(GARPTextField.getText());
 				
 				IPLayer IP = (IPLayer)m_LayerMgr.GetLayer("IP");
@@ -309,17 +306,13 @@ public class ArpAppLayer extends BaseLayer{
 				TCPLayer tcpLayer = (TCPLayer)m_LayerMgr.GetLayer("TCP");
 				tcpLayer.Send(new byte[0]);
 				
-				//arpLayer.Send(new byte[0], 0);
 				GARPTextField.setText("");
 			}
 		}
 	}
 	
 	public void updateARPCacheTable(ArrayList<ARP_CACHE> cache_table) {
-		// GUI에 cache table 업데이트
-		//ip주소를 string으로 변환 필요
-		//mac주소를 string으로 변환 필요
-		//ARPTable 변수 (JTable)의 row에 cache table 업데이터
+		// GUI cache table 업데이트
 		
 		// 모든 행 삭제
 		if (arpModel.getRowCount() > 0) {
@@ -328,7 +321,7 @@ public class ArpAppLayer extends BaseLayer{
 		    }
 		}
 		
-		//cache_table의 모든 행 추가
+		//cacheTable -> GUI
 		Iterator<ARP_CACHE> iter = cache_table.iterator();
     	while(iter.hasNext()) {
     		ARP_CACHE cache = iter.next();
@@ -349,7 +342,8 @@ public class ArpAppLayer extends BaseLayer{
 	}
 	
 	public void updateProxyEntry(ArrayList<Proxy> proxyEntry) {
-		// GUI에 proxy Entry 업데이트
+		// GUI proxyTable 업데이트
+		
 		// 모든 행 삭제
 		if (proxyModel.getRowCount() > 0) {
 		    for (int i = proxyModel.getRowCount() - 1; i > -1; i--) {
@@ -357,6 +351,7 @@ public class ArpAppLayer extends BaseLayer{
 		    }
 		}
 		
+		//proxyTable -> GUI
 		Iterator<Proxy> iter = proxyEntry.iterator();
     	while(iter.hasNext()) {
     		Proxy proxy = iter.next();

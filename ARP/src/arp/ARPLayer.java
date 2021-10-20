@@ -10,10 +10,10 @@ import arp.BaseLayer.TCP_HEADER;
 
 public class ARPLayer extends BaseLayer{
 
-	public static ArrayList<ARP_CACHE> cache_table = new ArrayList<ARP_CACHE>();
-	public static ArrayList<Proxy> proxyEntry = new ArrayList<Proxy>();
+	private static ArrayList<ARP_CACHE> cache_table = new ArrayList<ARP_CACHE>();
+	private static ArrayList<Proxy> proxyEntry = new ArrayList<Proxy>();
 	
-	public static ArpAppLayer appLayer;
+	private static ArpAppLayer appLayer;
 	
 	ARP_HEADER SendHeader = new ARP_HEADER();
 	ARP_HEADER RecvHeader = new ARP_HEADER();
@@ -49,14 +49,6 @@ public class ARPLayer extends BaseLayer{
 		GetUnderLayer(0).Send(ObjToByte(SendHeader));
 		return true;
 	}
-	public String ipByteToString(byte[] stringIP) {
-		String result = "";
-		for(byte raw : stringIP){
-			result += raw & 0xFF;
-			result += ".";
-		}
-		return result.substring(0, result.length()-1);		
-	}
 	//receive
 	@Override
 	public boolean Receive(byte[] input) {
@@ -64,12 +56,11 @@ public class ARPLayer extends BaseLayer{
 		RecvHeader = ByteToObj(input, ARP_HEADER.class);
 		
 		ARP_CACHE tempARP = getCache(RecvHeader.ip_src);
+		if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
 
 		switch (RecvHeader.opcode) { // arp 패킷 옵코드로 분류
 		case 0x01: // request
-			
-			if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
-					
+
 			// 요청이 오면 일단 저장
 			if(tempARP == null) { // 캐시테이블 미적중
 				ARP_CACHE arpCache = new ARP_CACHE(RecvHeader.ip_src, RecvHeader.mac_src, true);
@@ -107,8 +98,6 @@ public class ARPLayer extends BaseLayer{
 			}
 			break;
 		case 0x02: // reply
-			
-			if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
 
 			System.out.println("ARP 응답 수신");
 			// 수신
@@ -153,18 +142,6 @@ public class ARPLayer extends BaseLayer{
     		ARP_CACHE cache = iter.next();
     		if(Arrays.equals(ip, cache.ip)) {
     			return cache;
-    		}
-    	}
-    	return null;
-    }
-    
-   
-    public Proxy getProxy(byte[] ip) {
-    	Iterator<Proxy> iter = proxyEntry.iterator();
-    	while(iter.hasNext()) {
-    		Proxy proxy = iter.next();
-    		if(Arrays.equals(ip, proxy.ip)) {
-    			return proxy;
     		}
     	}
     	return null;

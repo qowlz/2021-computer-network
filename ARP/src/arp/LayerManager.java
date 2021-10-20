@@ -36,12 +36,7 @@ public class LayerManager { //Layer를 관리해주는 클래스(계층간 연�
 		mp_aLayers.add(m_nLayerCount++, pLayer);
 		//m_nLayerCount++;
 	}
-	
-	
-	public BaseLayer GetLayer(int nindex){
-		return mp_aLayers.get(nindex);
-	}
-	
+
 	public BaseLayer GetLayer(String pName){
 		for( int i=0; i < m_nLayerCount; i++){
 			if(pName.compareTo(mp_aLayers.get(i).GetLayerName()) == 0)

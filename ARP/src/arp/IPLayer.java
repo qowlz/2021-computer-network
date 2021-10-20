@@ -60,13 +60,13 @@ public class IPLayer extends BaseLayer {
         ARPLayer ARP = (ARPLayer) GetUnderLayer(0);
         ARP_CACHE cache = ARP.getCache(SendHeader.ip_dst); // Cache Table에 목적지 주소의 IP가 있는지 확인 -> 없으면 null
 
-        // Cache Table에 목적지 IP 주소가 없거나 / 2. 목적지 IP 주소가 본인 IP 주소인 경우 / 3. 데이터가 없는 경우
+        // Cache Table에 목적지 IP 주소가 없거나 / 2. 목적지 IP 주소가 본인 IP 주소인 경우 (GARP) / 3. 데이터가 없는 경우
         if (cache == null || Arrays.equals(SendHeader.ip_dst, ipAddress) || UpperHeader.data.length == 0) {
             ARP.SendHeader.ip_dst = Arrays.copyOf(SendHeader.ip_dst, 4); // ARP 목적지 IP 주소 변경
             EthernetLayer Ethernet = (EthernetLayer) GetUnderLayer(1);
             Ethernet.SendHeader.frame_type = 0x0806; // Type 지정
 
-            if (UpperHeader.data.length != 0) { // 데이터는 있지만 목적지에 도착하지 않은 경우
+            if (UpperHeader.data.length != 0) { // 데이터는 있지만 목적지에 도착하지 않은 경우 (NOT GARP)
                 IP_HEADER Packet = new IP_HEADER(); // Packet 객체 생성
                 Packet = ByteToObj(ObjToByte(SendHeader), IP_HEADER.class);
                 packet_queue.add(Packet); // 불발된 패킷 큐에 넣기

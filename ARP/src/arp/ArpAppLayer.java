@@ -263,7 +263,7 @@ public class ArpAppLayer extends BaseLayer{
 					byte[] dstIP = ip.getAddress();
 					
 					IPLayer IP = (IPLayer)m_LayerMgr.GetLayer("IP");
-					IP.Header.ip_dst = Arrays.copyOf(dstIP, 4);
+					IP.SendHeader.ip_dst = Arrays.copyOf(dstIP, 4);
 								
 					TCPLayer tcpLayer = (TCPLayer)GetUnderLayer(0);
 					tcpLayer.Send(new byte[0]);
@@ -340,7 +340,8 @@ public class ArpAppLayer extends BaseLayer{
 				IPLayer IP = (IPLayer)m_LayerMgr.GetLayer("IP");
 
 				BaseLayer.macAddress = mac;
-				IP.Header.ip_dst = ipAddress;
+				
+				IP.SendHeader.ip_dst = ipAddress;
 				
 				TCPLayer tcpLayer = (TCPLayer)m_LayerMgr.GetLayer("TCP");
 				tcpLayer.Send(new byte[0]);

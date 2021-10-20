@@ -4,7 +4,8 @@ import java.util.Arrays;
 
 public class ChatAppLayer extends BaseLayer{
 
-    CHAT_HEADER Header = new CHAT_HEADER();
+    CHAT_HEADER SendHeader = new CHAT_HEADER();
+    CHAT_HEADER RecvHeader = new CHAT_HEADER();
 
     private byte[] fragBytes;
     private int totalBytes;
@@ -15,17 +16,17 @@ public class ChatAppLayer extends BaseLayer{
     }
 
     public boolean Send(byte[] input, short length) {
-        Header.totalLen = length;
-        Header.type = (byte) (0x00);
+    	SendHeader.totalLen = length;
+    	SendHeader.type = (byte) (0x00);
         
         if (length <= MAXLEN) {
      
-            Header.data = Arrays.copyOf(input, length);
+        	SendHeader.data = Arrays.copyOf(input, length);
                	
             TCPLayer TCP = (TCPLayer) GetUnderLayer(0);
-        	TCP.Header.port_src = 0x2090;
-        	TCP.Header.port_dst = 0x2090;
-        	TCP.Send(ObjToByte(Header));
+        	TCP.SendHeader.port_src = 0x2090;
+        	TCP.SendHeader.port_dst = 0x2090;
+        	TCP.Send(ObjToByte(SendHeader));
         }else {
     
 	        for(int i = 0; i < length; i +=MAXLEN) {
@@ -33,18 +34,18 @@ public class ChatAppLayer extends BaseLayer{
 	       
 	        	byte[] data = new byte[left_packet];
 
-		        Header.type++;
+	        	SendHeader.type++;
 		        System.out.println(data.length + " 번째 보냄");
 	        	System.arraycopy(input, i, data, 0, left_packet);
-	        	Header.data = Arrays.copyOf(data, left_packet);
+	        	SendHeader.data = Arrays.copyOf(data, left_packet);
 	        	
 				IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
-				IP.Header.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
+				IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
 	        	
 	            TCPLayer TCP = (TCPLayer) GetUnderLayer(0);
-	        	TCP.Header.port_src = 0x2090;
-	        	TCP.Header.port_dst = 0x2090;
-	        	TCP.Send(ObjToByte(Header));
+	        	TCP.SendHeader.port_src = 0x2090;
+	        	TCP.SendHeader.port_dst = 0x2090;
+	        	TCP.Send(ObjToByte(SendHeader));
 	        }      
         }
         	
@@ -53,26 +54,26 @@ public class ChatAppLayer extends BaseLayer{
  
     public boolean Receive(byte[] input) {
     	
-    	Header = ByteToObj(input, CHAT_HEADER.class);
+    	RecvHeader = ByteToObj(input, CHAT_HEADER.class);
     	
         if (input == null) return true;
                 
-        if (Header.type == 0) {
-        	this.GetUpperLayer(0).Receive(Header.data);
+        if (RecvHeader.type == 0) {
+        	this.GetUpperLayer(0).Receive(RecvHeader.data);
         	return true;
         }
         
-        int offset = (Header.type -1) * MAXLEN;
+        int offset = (RecvHeader.type -1) * MAXLEN;
         
     	if (fragBytes == null) {
-        	fragBytes = new byte[Header.totalLen];
+        	fragBytes = new byte[RecvHeader.totalLen];
         	totalBytes = 0;
     	}
 
-    	totalBytes += Header.data.length;
-    	System.arraycopy(Header.data, 0, fragBytes, offset, Header.data.length);
+    	totalBytes += RecvHeader.data.length;
+    	System.arraycopy(RecvHeader.data, 0, fragBytes, offset, RecvHeader.data.length);
 
-    	if (Header.totalLen <= totalBytes) {
+    	if (RecvHeader.totalLen <= totalBytes) {
     		System.out.println(totalBytes + "채팅 받음");
     		for (byte b : fragBytes)
     			System.out.printf("%d ",b);

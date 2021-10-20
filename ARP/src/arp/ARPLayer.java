@@ -15,7 +15,8 @@ public class ARPLayer extends BaseLayer{
 	
 	public static ArpAppLayer appLayer;
 	
-	ARP_HEADER Header = new ARP_HEADER();
+	ARP_HEADER SendHeader = new ARP_HEADER();
+	ARP_HEADER RecvHeader = new ARP_HEADER();
 	
 	public void setArpAppLayer(ArpAppLayer Layer) {
 		appLayer = Layer;
@@ -30,22 +31,22 @@ public class ARPLayer extends BaseLayer{
 	
 		IP_HEADER UpperHeader = ByteToObj(input, IP_HEADER.class);
 		
-		Header.ip_dst = Arrays.copyOf(UpperHeader.ip_dst, 4);
-		Header.opcode = 0x01; // request 타입
-		Header.ip_src = Arrays.copyOf(ipAddress,4);
-		Header.mac_src = Arrays.copyOf(macAddress,6); // 송신지 본인으로 설정
-		Header.mac_dst = new byte[] {-1,-1,-1,-1,-1,-1}; // 수신지 브로드캐스팅
+		SendHeader.ip_dst = Arrays.copyOf(UpperHeader.ip_dst, 4);
+		SendHeader.opcode = 0x01; // request 타입
+		SendHeader.ip_src = Arrays.copyOf(ipAddress,4);
+		SendHeader.mac_src = Arrays.copyOf(macAddress,6); // 송신지 본인으로 설정
+		SendHeader.mac_dst = new byte[] {-1,-1,-1,-1,-1,-1}; // 수신지 브로드캐스팅
 		// 목적지 ip는 arpapp layer에서 설정
 		
-		if(getCache(Header.ip_dst) == null && Arrays.equals(Header.ip_src, Header.ip_dst) != true) { // 헤더에 목적지 주소가 없거나 본인에게 보내는거 제외
+		if(getCache(SendHeader.ip_dst) == null && Arrays.equals(SendHeader.ip_src, SendHeader.ip_dst) != true) { // 헤더에 목적지 주소가 없거나 본인에게 보내는거 제외
 			byte[] tempMac = new byte[6];
-			ARP_CACHE arpcache = new ARP_CACHE(Header.ip_dst, tempMac, false);
+			ARP_CACHE arpcache = new ARP_CACHE(SendHeader.ip_dst, tempMac, false);
 			addCacheTable(arpcache);
 			
 			updateCacheTable();
 		}
 		
-		GetUnderLayer(0).Send(ObjToByte(Header));
+		GetUnderLayer(0).Send(ObjToByte(SendHeader));
 		return true;
 	}
 	public String ipByteToString(byte[] stringIP) {
@@ -60,45 +61,45 @@ public class ARPLayer extends BaseLayer{
 	@Override
 	public boolean Receive(byte[] input) {
 
-		Header = ByteToObj(input, ARP_HEADER.class);
+		RecvHeader = ByteToObj(input, ARP_HEADER.class);
 		
-		ARP_CACHE tempARP = getCache(Header.ip_src);
+		ARP_CACHE tempARP = getCache(RecvHeader.ip_src);
 
-		switch (Header.opcode) { // arp 패킷 옵코드로 분류
+		switch (RecvHeader.opcode) { // arp 패킷 옵코드로 분류
 		case 0x01: // request
 			
-			if(Arrays.equals(Header.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
+			if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
 					
 			// 요청이 오면 일단 저장
 			if(tempARP == null) { // 캐시테이블 미적중
-				ARP_CACHE arpCache = new ARP_CACHE(Header.ip_src, Header.mac_src, true);
+				ARP_CACHE arpCache = new ARP_CACHE(RecvHeader.ip_src, RecvHeader.mac_src, true);
 				addCacheTable(arpCache);
 			}else {  // 캐시테이블 적중
 				tempARP.status = true;
-				tempARP.mac = Arrays.copyOf(Header.mac_src, 6);
+				tempARP.mac = Arrays.copyOf(RecvHeader.mac_src, 6);
 			}
 			updateCacheTable();
 
-			if(Arrays.equals(Header.ip_dst, ipAddress)) {	// 수신지가 본인이면
-				Header.opcode = 0x02; // reply
-				Header.ip_dst = Arrays.copyOf(Header.ip_src,4); // 수신지를 목적지로
-				Header.mac_dst = Arrays.copyOf(Header.mac_src,6); // 수신지를 목적지로
-				Header.mac_src = Arrays.copyOf(macAddress,6); // 송신지 다시지정
-				Header.ip_src = Arrays.copyOf(ipAddress,4); // 송신지 ip 나로 지정
-				GetUnderLayer(0).Send(ObjToByte(Header));
+			if(Arrays.equals(RecvHeader.ip_dst, ipAddress)) {	// 수신지가 본인이면 
+				SendHeader.opcode = 0x02; // reply
+				SendHeader.ip_dst = Arrays.copyOf(RecvHeader.ip_src,4); // 수신지를 목적지로
+				SendHeader.mac_dst = Arrays.copyOf(RecvHeader.mac_src,6); // 수신지를 목적지로
+				SendHeader.mac_src = macAddress; // 송신지 다시지정
+				SendHeader.ip_src = ipAddress; // 송신지 ip 나로 지정
+				GetUnderLayer(0).Send(ObjToByte(SendHeader));
 
 			}else{ // 목적지가 자신이 아닌경우 프록시 찾기
 				Iterator<Proxy> iter = proxyEntry.iterator();
 				
 				while(iter.hasNext()) {
 					Proxy proxy = iter.next();
-					if(Arrays.equals(Header.ip_dst,  proxy.ip)) { // 프록시에 존재하면
-						Header.opcode = 0x02; // reply
-						Header.ip_dst = Arrays.copyOf(Header.ip_src,4);
-						Header.mac_dst = Arrays.copyOf(Header.mac_src,6);
-						Header.mac_src = Arrays.copyOf(macAddress,6); // 맥은 본인 pc로
-						Header.ip_src = Arrays.copyOf(proxy.ip,4); // 송신지 ip 프록시 ip로 지정
-						GetUnderLayer(0).Send(ObjToByte(Header)); 
+					if(Arrays.equals(RecvHeader.ip_dst,  proxy.ip)) { // 프록시에 존재하면
+						SendHeader.opcode = 0x02; // reply
+						SendHeader.ip_dst = Arrays.copyOf(RecvHeader.ip_src,4);
+						SendHeader.mac_dst = Arrays.copyOf(RecvHeader.mac_src,6);
+						SendHeader.mac_src = macAddress; // 맥은 본인 pc로
+						SendHeader.ip_src = Arrays.copyOf(proxy.ip, 4); // 송신지 ip 프록시 ip로 지정
+						GetUnderLayer(0).Send(ObjToByte(SendHeader)); 
 						break;
 					}
 				}
@@ -107,16 +108,16 @@ public class ARPLayer extends BaseLayer{
 			break;
 		case 0x02: // reply
 			
-			if(Arrays.equals(Header.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
+			if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
 
 			System.out.println("ARP 응답 수신");
 			// 수신
 			if(tempARP == null) { // 캐시테이블 미적중
-				ARP_CACHE arpCache = new ARP_CACHE(Header.ip_src, Header.mac_src, true);
+				ARP_CACHE arpCache = new ARP_CACHE(RecvHeader.ip_src, RecvHeader.mac_src, true);
 				addCacheTable(arpCache);
 			}else {  // 캐시테이블 적중
 				tempARP.status = true;
-				tempARP.mac = Arrays.copyOf(Header.mac_src, 6);
+				tempARP.mac = Arrays.copyOf(RecvHeader.mac_src, 6);
 			}
 			
 			updateCacheTable();

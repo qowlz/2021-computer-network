@@ -4,14 +4,9 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Files;
 
 import javax.swing.JButton;
@@ -23,6 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
@@ -113,10 +109,10 @@ public class ChatFileDlg extends BaseLayer {
 		chattingEditorPanel.setBounds(10, 15, 340, 210);
 		chattingPanel.add(chattingEditorPanel);
 		chattingEditorPanel.setLayout(null);
-
+	
 		ChattingArea = new JTextArea();
-		ChattingArea.setEditable(false);
-		ChattingArea.setBounds(0, 0, 340, 210);
+		ChattingArea.setEditable(true);
+		ChattingArea.setBounds(10, 15, 340, 210);
 		chattingEditorPanel.add(ChattingArea);// chatting edit
 		ChattingArea.setLineWrap(true);
 
@@ -284,7 +280,7 @@ public class ChatFileDlg extends BaseLayer {
 					} 
 					IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
 					//arp.ChatAppLayer.Send(byte[])" because the return value of "arp.LayerManager.GetLayer(String)" is null
-					IP.Header.ip_dst = StrToIp(dstIpAddress.getText());
+					IP.SendHeader.ip_dst = StrToIp(dstIpAddress.getText());
 
 					((ChatAppLayer)GetUnderLayer(0)).Send(bytes, (short)(bytes.length));
 					//梨꾪똿李쎌뿉 �엯�젰�맂 硫붿떆吏�瑜� chatApplayer濡� 蹂대깂
@@ -313,7 +309,7 @@ public class ChatFileDlg extends BaseLayer {
 			
 			if(e.getSource() == FileSendButton){
 				IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));			
-				IP.Header.ip_dst = StrToIp(dstIpAddress.getText());
+				IP.SendHeader.ip_dst = StrToIp(dstIpAddress.getText());
 				
 				FileAppLayer FAlayer = (FileAppLayer)m_LayerMgr.GetLayer("File");
 				File_Send_Thread FST = new File_Send_Thread(FAlayer, file);
@@ -343,8 +339,6 @@ public class ChatFileDlg extends BaseLayer {
 		public void run() {
 			FileLayer.Send(this.data, this.length, this.name);
 		}
-		
-		
 	}
 
 	public boolean Receive(byte[] input) { //硫붿떆吏� Receive
@@ -359,6 +353,7 @@ public class ChatFileDlg extends BaseLayer {
 			} //�븘�옒痢듭뿉�꽌 �삱�씪�삩 硫붿떆吏�瑜� String text濡� 蹂��솚�빐以�
 
 			ChattingArea.append("[RECV] : " + Text + "\n"); //梨꾪똿李쎌뿉 �닔�떊硫붿떆吏�瑜� 蹂댁뿬以�
+
 			return false;
 		}
 		return false ;

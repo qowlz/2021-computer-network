@@ -14,7 +14,8 @@ public class FileAppLayer extends BaseLayer {
     final byte INFO = 0x00;
     final byte DATA = 0x01;
 
-	FILE_HEADER Header = new FILE_HEADER();
+	FILE_HEADER SendHeader = new FILE_HEADER();
+	FILE_HEADER RecvHeader = new FILE_HEADER();
 
     public FileAppLayer(String pName) {
         // TODO Auto-generated constructor stub
@@ -24,15 +25,15 @@ public class FileAppLayer extends BaseLayer {
 
     public boolean Send(byte[] input, int length, String name) {
 
-        Header.fapp_seq_num = 0;
-        Header.fapp_totlen = length;
-        Header.fapp_msg_type = INFO;
-        Header.fapp_data = name.getBytes();
+    	SendHeader.fapp_seq_num = 0;
+    	SendHeader.fapp_totlen = length;
+    	SendHeader.fapp_msg_type = INFO;
+    	SendHeader.fapp_data = name.getBytes();
         
         TCPLayer TCP = (TCPLayer) GetUnderLayer(0);
-    	TCP.Header.port_src = 0x2091;
-    	TCP.Header.port_dst = 0x2091;
-    	TCP.Send(ObjToByte(Header));
+    	TCP.SendHeader.port_src = 0x2091;
+    	TCP.SendHeader.port_dst = 0x2091;
+    	TCP.Send(ObjToByte(SendHeader));
     	
         ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setMinimum(0);
         ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setMaximum(length);
@@ -40,33 +41,33 @@ public class FileAppLayer extends BaseLayer {
     	
         if (length <= MAXLEN) {
      
-        	Header.fapp_msg_type = DATA;
-            Header.fapp_data = Arrays.copyOf(input, length);
+        	SendHeader.fapp_msg_type = DATA;
+        	SendHeader.fapp_data = Arrays.copyOf(input, length);
             
-        	TCP.Header.port_src = 0x2091;
-        	TCP.Header.port_dst = 0x2091;
-        	TCP.Send(ObjToByte(Header));
+        	TCP.SendHeader.port_src = 0x2091;
+        	TCP.SendHeader.port_dst = 0x2091;
+        	TCP.Send(ObjToByte(SendHeader));
         }else {  
 	        for(int i = 0; i < length; i +=MAXLEN) {
 	        	int left_packet = ((length - i) > MAXLEN) ? MAXLEN : (length - i);
 	       
 	        	byte[] data = new byte[left_packet];
 
-	        	Header.fapp_msg_type = DATA;
+	        	SendHeader.fapp_msg_type = DATA;
 		        System.out.println(data.length + " 번째 보냄");
 	        	System.arraycopy(input, i, data, 0, left_packet);
-	        	Header.fapp_data = Arrays.copyOf(data, left_packet);	
+	        	SendHeader.fapp_data = Arrays.copyOf(data, left_packet);	
 	        	
 				IPLayer IP = ((IPLayer)m_LayerMgr.GetLayer("IP"));
-				IP.Header.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
+				IP.SendHeader.ip_dst = StrToIp(((ChatFileDlg)GetUpperLayer(0)).dstIpAddress.getText());
 	        	
-	        	TCP.Header.port_src = 0x2091;
-	        	TCP.Header.port_dst = 0x2091;
-	        	TCP.Send(ObjToByte(Header));
+	        	TCP.SendHeader.port_src = 0x2091;
+	        	TCP.SendHeader.port_dst = 0x2091;
+	        	TCP.Send(ObjToByte(SendHeader));
 	        	
-	        	Header.fapp_seq_num++;
+	        	SendHeader.fapp_seq_num++;
 	        	
-	        	((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(i);
+	        	((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(i+1);
 
 	        	try {
 	    			Thread.sleep(100); // 파일전송 동시에 채팅 보내는거 확인하기위한 딜레이 빼도 문제없음
@@ -82,42 +83,42 @@ public class FileAppLayer extends BaseLayer {
  
     public boolean Receive(byte[] input) {
     	
-    	Header = ByteToObj(input, FILE_HEADER.class);
+    	RecvHeader = ByteToObj(input, FILE_HEADER.class);
     	
         if (input == null) return true;
         
         if (fragBytes == null) {
-        	fragBytes = new byte[Header.fapp_totlen];
+        	fragBytes = new byte[RecvHeader.fapp_totlen];
         	totalBytes = 0;
         }
         
-        if (Header.fapp_msg_type == INFO) {
+        if (RecvHeader.fapp_msg_type == INFO) {
         	
         	System.out.println("파일 헤더 받음");
         	
-        	fileName = new String(Header.fapp_data);
+        	fileName = new String(RecvHeader.fapp_data);
         	String newChat = "[FILE RECV " + fileName + "]";
         	
             ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setMinimum(0);
-            ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setMaximum(Header.fapp_totlen);
+            ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setMaximum(RecvHeader.fapp_totlen);
             ((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(0);
             
         	GetUpperLayer(0).Receive(newChat.getBytes());
         	return true;
         }
         
-        if (Header.fapp_msg_type == DATA) {
+        if (RecvHeader.fapp_msg_type == DATA) {
         	
-            int offset = (Header.fapp_seq_num) * MAXLEN ;
+            int offset = (RecvHeader.fapp_seq_num) * MAXLEN ;
 
-        	totalBytes += Header.fapp_data.length;
+        	totalBytes += RecvHeader.fapp_data.length;
         	((ChatFileDlg)this.GetUpperLayer(0)).progressBar.setValue(totalBytes);
         	
-        	System.arraycopy(Header.fapp_data, 0, fragBytes, offset, Header.fapp_data.length);
+        	System.arraycopy(RecvHeader.fapp_data, 0, fragBytes, offset, RecvHeader.fapp_data.length);
         	
         	System.out.println(totalBytes + "파일 받음");
 
-        	if (Header.fapp_totlen <= totalBytes) {
+        	if (RecvHeader.fapp_totlen <= totalBytes) {
         		System.out.println("파일 다 받음");
 
         	    try{

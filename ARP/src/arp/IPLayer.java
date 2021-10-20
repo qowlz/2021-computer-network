@@ -7,7 +7,9 @@ import java.util.TimerTask;
 
 public class IPLayer extends BaseLayer {
 
-	IP_HEADER Header = new IP_HEADER();
+	IP_HEADER SendHeader = new IP_HEADER();
+	IP_HEADER RecvHeader = new IP_HEADER();
+	
 	public ArrayList<IP_HEADER> packet_queue = new ArrayList<IP_HEADER>();
 	
 	
@@ -32,8 +34,8 @@ public class IPLayer extends BaseLayer {
                 		if (cache != null) {
                 			if (!Arrays.equals(cache.mac, new byte[] {0,0,0,0,0,0})) {
                     			EthernetLayer Ethernet = (EthernetLayer)GetUnderLayer(1);
-                    			Ethernet.Header.mac_dst = Arrays.copyOf(cache.mac,cache.mac.length); // 맥주소 지정하고
-                    			Ethernet.Header.frame_type = 0x0800; // type 지정하고
+                    			Ethernet.SendHeader.mac_dst = Arrays.copyOf(cache.mac,cache.mac.length); // 맥주소 지정하고
+                    			Ethernet.SendHeader.frame_type = 0x0800; // type 지정하고
                     			Packet.ip_dst = cache.ip;
                     			Packet.ip_version = 4;
                     			Packet.ip_src = ipAddress;
@@ -56,38 +58,38 @@ public class IPLayer extends BaseLayer {
 	@Override
 	public boolean Send(byte[] input) {
 		
-		Header.ip_src = ipAddress;
-		Header.data = input;
+		SendHeader.ip_src = ipAddress;
+		SendHeader.data = input;
 		
 		TCP_HEADER UpperHeader = ByteToObj(input, TCP_HEADER.class);
 		ARPLayer ARP = (ARPLayer)GetUnderLayer(0);
-		ARP_CACHE cache = ARP.getCache(Header.ip_dst);
+		ARP_CACHE cache = ARP.getCache(SendHeader.ip_dst);
 	
-		if (cache == null || Arrays.equals(Header.ip_dst, ipAddress) || UpperHeader.data.length == 0) { // 목적지 ip의 맥주소가 없거나 도착지가 나일경우 (gratuitous 일 경우)
-			ARP.Header.ip_dst = Arrays.copyOf(Header.ip_dst, 4); // ARP의 대상 ip 변경
+		if (cache == null || Arrays.equals(SendHeader.ip_dst, ipAddress) || UpperHeader.data.length == 0) { // 목적지 ip의 맥주소가 없거나 도착지가 나일경우 (gratuitous 일 경우)
+			ARP.SendHeader.ip_dst = Arrays.copyOf(SendHeader.ip_dst, 4); // ARP의 대상 ip 변경
 			EthernetLayer Ethernet = (EthernetLayer)GetUnderLayer(1);
-			Ethernet.Header.frame_type = 0x0806; // type 지정하
+			Ethernet.SendHeader.frame_type = 0x0806; // type 지정하
 				
 			if (UpperHeader.data.length != 0) { // 데이터가 있는데 미적중 했다는뜻
 
 				IP_HEADER Pacekt = new IP_HEADER();
-				Pacekt = ByteToObj(ObjToByte(Header),IP_HEADER.class);
+				Pacekt = ByteToObj(ObjToByte(SendHeader),IP_HEADER.class);
 				packet_queue.add(Pacekt); // 불발된 패킷 큐에 넣기			
-				Header.data = new byte[0]; // data 삭제 -> 헤더만 보내기
+				SendHeader.data = new byte[0]; // data 삭제 -> 헤더만 보내기
 			}
 	
-			byte[] b = ObjToByte(Header);
+			byte[] b = ObjToByte(SendHeader);
 			ARP.Send(Arrays.copyOf(b, b.length)); // ARP로 보냄
 		}else { // 목적지 ip의 mac주소가 있으면
 
 			EthernetLayer Ethernet = (EthernetLayer)GetUnderLayer(1);
-			Ethernet.Header.mac_dst = Arrays.copyOf(cache.mac,cache.mac.length); // 맥주소 지정하고
-			Ethernet.Header.frame_type = 0x0800; // type 지정하고
-			
-			Header.ip_dst = cache.ip;
-			Header.ip_version = 4;
+			Ethernet.SendHeader.mac_dst = Arrays.copyOf(cache.mac,cache.mac.length); // 맥주소 지정하고
+			Ethernet.SendHeader.frame_type = 0x0800; // type 지정하고
 
-			byte[] b = ObjToByte(Header);
+			SendHeader.ip_dst = cache.ip;
+			SendHeader.ip_version = 4;
+
+			byte[] b = ObjToByte(SendHeader);
 			
 			Ethernet.Send(Arrays.copyOf(b, b.length)); // Ethernet으로 보냄
 		}
@@ -97,21 +99,21 @@ public class IPLayer extends BaseLayer {
 	
 	@Override
 	public boolean Receive(byte[] input) {		
-		Header = ByteToObj(input, IP_HEADER.class);		
+		RecvHeader = ByteToObj(input, IP_HEADER.class);		
 		ARPLayer ARP = (ARPLayer)GetUnderLayer(0);
 		
-		if (Arrays.equals(Header.ip_dst, ipAddress)) { // 자기 ip면 전달
-			ARP_CACHE cache = ARP.getCache(Header.ip_src); // 송신지 ip 캐시에서 검색
+		if (Arrays.equals(RecvHeader.ip_dst, ipAddress)) { // 자기 ip면 전달
+			ARP_CACHE cache = ARP.getCache(RecvHeader.ip_src); // 송신지 ip 캐시에서 검색
 			if (cache == null) { //  나의 ip가 상대쪽 arp 테이블에만 있는경우 	
 				//TCPLayer TCP = (TCPLayer)GetUpperLayer(0);
 				//if (TCP.Header.port_dst == 0x2090 || TCP.Header.port_dst == 0x2091) {
 					EthernetLayer Ethernet = (EthernetLayer)GetUnderLayer(1);
-					cache = new ARP_CACHE(Header.ip_src, Ethernet.Header.mac_src, true);
+					cache = new ARP_CACHE(RecvHeader.ip_src, Ethernet.RecvHeader.mac_src, true);
 					ARP.addCacheTable(cache);
 				//}
 			}
-			System.out.println(IpToStr(Header.ip_src) + "-IP_RECV>" + IpToStr(Header.ip_dst) );
-			GetUpperLayer(0).Receive(Header.data);
+			System.out.println(IpToStr(RecvHeader.ip_src) + "-IP_RECV>" + IpToStr(RecvHeader.ip_dst) );
+			GetUpperLayer(0).Receive(RecvHeader.data);
 			return true;
 		}
 		return false;

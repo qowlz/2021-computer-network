@@ -1,14 +1,17 @@
+package router;
+
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+
+import org.jnetpcap.PcapIf;
+
 import java.awt.*;
 
-public class ApplicationLayer {
+public class ApplicationLayer extends BaseLayer{
 	private JTable routingTable;
 
 	private JTable arpCacheTable;
-
-	private JTable proxyARPTable;
-
 
 	public void CreateWindow()
 	{
@@ -38,7 +41,7 @@ public class ApplicationLayer {
 
 		JPanel cachePanel = new JPanel();
 		cachePanel.setLayout(new GridBagLayout());
-		cachePanel.setBounds(windowWidth / 2, 0, windowWidth / 2 - 20, windowHeight / 2 - 20);
+		cachePanel.setBounds(windowWidth / 2, 7 , windowWidth / 2 - 20 , windowHeight - 65);
 
 		gbc.weightx = 1;
 
@@ -72,54 +75,10 @@ public class ApplicationLayer {
 		gbc.gridheight = 1;
 		cachePanel.add(deleteCacheTblBtn, gbc);
 
-		JPanel proxyPanel = new JPanel();
-		proxyPanel.setLayout(new GridBagLayout());
-		proxyPanel.setBounds(windowWidth / 2, windowHeight / 2, windowWidth / 2 - 20, windowHeight / 2 - 50);
-
-		JLabel proxyTitle = new JLabel("Proxy ARP Table");
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.weighty = 0.2;
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.gridwidth = 2;
-		gbc.gridheight = 1;
-		proxyPanel.add(proxyTitle, gbc);
-
-		proxyARPTable =new JTable(new DefaultTableModel(new String[][] {},
-				new String[]{"IP Address", "Ethernet Address", "Interface"}));
-		JScrollPane sp3 =new JScrollPane(proxyARPTable);
-		gbc.fill = GridBagConstraints.BOTH;
-		gbc.weighty = 0.6;
-		gbc.gridx = 0;
-		gbc.gridy = 1;
-		gbc.gridwidth = 2;
-		gbc.gridheight = 1;
-		proxyPanel.add(sp3, gbc);
-
-		JButton addProxyBtn = new JButton("Add");
-		addProxyBtn.addActionListener(e -> onClickAddProxyTableBtn());
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.weighty = 0.2;
-		gbc.gridx = 0;
-		gbc.gridy = 2;
-		gbc.gridwidth = 1;
-		gbc.gridheight = 1;
-		proxyPanel.add(addProxyBtn, gbc);
-
-		JButton deleteProxyBtn = new JButton("Delete");
-		deleteProxyBtn.addActionListener(e -> onClickDeleteProxyTableBtn());
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.weighty = 0.2;
-		gbc.gridx = 1;
-		gbc.gridy = 2;
-		gbc.gridwidth = 1;
-		gbc.gridheight = 1;
-		proxyPanel.add(deleteProxyBtn, gbc);
 
 		JFrame f=new JFrame();//creating instance of JFrame
 		f.add(routingPanel);
 		f.add(cachePanel);
-		f.add(proxyPanel);
 		f.setSize(windowWidth,windowHeight);
 		f.setLocationRelativeTo(null);
 		f.setLayout(null);//using no layout managers
@@ -127,38 +86,153 @@ public class ApplicationLayer {
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 
-	public ApplicationLayer()
+	public ApplicationLayer(String pName)
 	{
+		pLayerName = pName;
 		CreateWindow();
 	}
 
 	public static void main(String[] args) {
-		new ApplicationLayer();
+		
+		layerManager.AddLayer(new NILayer("NI"));
+		layerManager.AddLayer(new ApplicationLayer("App"));
 	}
+	public class ProxyTableAddPopup extends JFrame {
 
+		private JPanel contentPane;
+		
+		private JTextField DstIp;
+		private JTextField NetMask;
+		private JTextField Gateway;
+
+		
+		private JCheckBox FlagU;
+		private JCheckBox FlagG;
+		private JCheckBox FlagH;
+
+		private JComboBox<String> Ninterface;
+		
+		ProxyTableAddPopup(){
+
+			setTitle("Routing table add");
+			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			setBounds(100, 100, 490, 295);
+			contentPane = new JPanel();
+			
+			contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+			setContentPane(contentPane);
+			contentPane.setLayout(null);
+			
+			JLabel ProxyEntryIpLabel = new JLabel("Destination");
+			ProxyEntryIpLabel.setFont(new Font("µ¸¿ò", Font.BOLD, 10));
+			ProxyEntryIpLabel.setBounds(25, 35, 75, 35);
+			contentPane.add(ProxyEntryIpLabel);
+			
+			JLabel proxyEntryEthernetLabel = new JLabel("NetMask");
+			proxyEntryEthernetLabel.setFont(new Font("µ¸¿ò", Font.BOLD, 10));
+			proxyEntryEthernetLabel.setBounds(25, 70, 135, 35);
+			contentPane.add(proxyEntryEthernetLabel);
+			
+			DstIp = new JTextField();
+			DstIp.setBounds(170, 35, 220, 30);
+			contentPane.add(DstIp);
+			DstIp.setColumns(10);
+			
+			NetMask = new JTextField();
+			NetMask.setColumns(10);
+			NetMask.setBounds(170, 70, 220, 30);
+			contentPane.add(NetMask);
+			
+			JButton routeTableAddBtn = new JButton("Add");
+			routeTableAddBtn.setBounds(105, 215, 100, 25);
+			contentPane.add(routeTableAddBtn);
+			
+			JButton routeTableCancelBtn = new JButton("Cancel");
+			routeTableCancelBtn.setBounds(266, 215, 100, 25);
+			contentPane.add(routeTableCancelBtn);
+			routeTableCancelBtn.addActionListener(e->{
+				dispose();
+			});
+			
+			JLabel gatewayLabel = new JLabel("Gateway");
+			gatewayLabel.setFont(new Font("µ¸¿ò", Font.BOLD, 10));
+			gatewayLabel.setBounds(25, 105, 135, 35);
+			contentPane.add(gatewayLabel);
+			
+			Gateway = new JTextField();
+			Gateway.setColumns(10);
+			Gateway.setBounds(170, 105, 220, 30);
+			contentPane.add(Gateway);
+			
+			JLabel flagLabel = new JLabel("Flag");
+			flagLabel.setFont(new Font("µ¸¿ò", Font.BOLD, 10));
+			flagLabel.setBounds(25, 140, 135, 35);
+			contentPane.add(flagLabel);
+			
+			JCheckBox FlagU = new JCheckBox("UP");
+			JCheckBox FlagG = new JCheckBox("Gateway");
+			JCheckBox FlagH = new JCheckBox("Host");
+			FlagU.setBounds(170, 140, 50 , 30);
+			FlagG.setBounds(220, 140, 100, 30);
+			FlagH.setBounds(320, 140, 80 , 30);
+
+			contentPane.add(FlagU);
+			contentPane.add(FlagG);
+			contentPane.add(FlagH);
+
+			JLabel interfaceLabel = new JLabel("Interface");
+			interfaceLabel.setFont(new Font("µ¸¿ò", Font.BOLD, 10));
+			interfaceLabel.setBounds(25, 175, 135, 35);
+			contentPane.add(interfaceLabel);
+			
+			Ninterface = new JComboBox();
+			Ninterface.setBounds(170,180,100,20);
+			contentPane.add(Ninterface);
+			NILayer NI = (NILayer) layerManager.GetLayer("NI"); 
+			for (PcapIf pcapIf : NI.getAdapterList()) {
+				Ninterface.addItem(pcapIf.getName());
+			}
+			routeTableAddBtn.addActionListener(e -> {
+				String dst = DstIp.getText().trim();
+				String netMask = NetMask.getText().trim();
+				String gateway = Gateway.getText().trim();
+				String nInf = Ninterface.getSelectedItem().toString().trim();
+				boolean flagU = FlagU.isSelected();
+				if (!dst.equals("") && !netMask.equals("") && flagU	&& !gateway.equals("") && !nInf.equals("")) {
+					String flag = "U";
+					if (FlagG.isSelected()) flag+="G";
+					if (FlagH.isSelected()) flag+="H";
+					((DefaultTableModel)routingTable.getModel()).addRow(new String[]{dst, netMask, gateway, flag, nInf});
+				}
+			});
+	
+			setVisible(true);
+		}
+
+		
+	}
 	public void onClickAddRoutingTableBtn()
 	{
 		//FIXME: test code
-		((DefaultTableModel)routingTable.getModel()).addRow(new String[]{"t1", "t2", "t3", "t4", "t5", "t6"});
+		new ProxyTableAddPopup();
 	}
 
 	public void onClickDeleteRoutingTableBtn()
 	{
-
+		int row = routingTable.getSelectedRow();
+		if (row == -1) {
+			return;
+		}
+		((DefaultTableModel) routingTable.getModel()).removeRow(row);
 	}
 
 	public void onClickDeleteCacheTableBtn()
 	{
-
+		int row = arpCacheTable.getSelectedRow();
+		if (row == -1) {
+			return;
+		}
+		((DefaultTableModel) arpCacheTable.getModel()).removeRow(row);
 	}
 
-	public void onClickAddProxyTableBtn()
-	{
-
-	}
-
-	public void onClickDeleteProxyTableBtn()
-	{
-
-	}
 }

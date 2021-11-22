@@ -40,35 +40,6 @@ public abstract class BaseLayer {
 		byte[] ip_dst = new byte[4];
 		byte[] data = null;
 	}
-	public static class TCP_HEADER {
-		short port_src = 0;
-		short port_dst = 0;
-		int seq = 0;
-		int ack = 0;
-		byte offset = 0;
-		byte flag = 0;
-		short window = 0;
-		short cksum = 0;
-		short urgptr = 0;
-		byte[] pad = new byte[4];
-		byte[] data = null;
-	}
-	
-	public static class CHAT_HEADER {
-        short totalLen = 0;
-        byte type = 0x00;
-        byte unused = 0x00;
-        byte[] data = null;
-    }
-	
-    public static class FILE_HEADER {
-        int totalLen = 0;
-        short type = 0;
-        byte msgType = 0x00;
-        byte unused = 0x00;
-        int seqNum = 0;
-        byte[] data = null;
-    }
 	
     public static class ARP_CACHE{
     	public byte[] ip = new byte[4];

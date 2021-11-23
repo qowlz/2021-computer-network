@@ -215,7 +215,8 @@ public class ApplicationLayer extends BaseLayer{
 					String flag = "U";
 					if (FlagG.isSelected()) flag+="G";
 					if (FlagH.isSelected()) flag+="H";
-					((DefaultTableModel)routingTable.getModel()).addRow(new String[]{dst, netMask, gateway, flag, nInf});
+					IPLayer ip = (IPLayer) layerManager.GetLayer(Constants.IPLayerName);
+					ip.addEntry(new ROUTING_ENRTY(dst,netMask,gateway,flag,nInf,"1"));
 				}
 			});
 	
@@ -236,7 +237,9 @@ public class ApplicationLayer extends BaseLayer{
 		if (row == -1) {
 			return;
 		}
-		((DefaultTableModel) routingTable.getModel()).removeRow(row);
+		IPLayer ip = (IPLayer) layerManager.GetLayer(Constants.IPLayerName);
+		ip.removeEntry(StrToIp((String)routingTable.getModel().getValueAt(row, 0)));
+		
 
 	}
 
@@ -247,9 +250,7 @@ public class ApplicationLayer extends BaseLayer{
 			return;
 		}
 		ARPLayer arp = (ARPLayer) layerManager.GetLayer(Constants.ARPLayerName);
-		((DefaultTableModel) arpCacheTable.getModel()).removeRow(row);
-		
-		
+		arp.cacheRemove(StrToIp((String)arpCacheTable.getModel().getValueAt(row, 0)));
 	}
 	
 	public void updateRoutingTable(ArrayList<ROUTING_ENRTY> routing_table) {
@@ -257,6 +258,7 @@ public class ApplicationLayer extends BaseLayer{
 		for (ROUTING_ENRTY entry : routing_table)
 			((DefaultTableModel)routingTable.getModel()).addRow(new String[]{entry.dst, entry.mask, entry.gateway, entry.flag, entry.Interface});
 	}
+	
 	public void updateARPCacheTable(ArrayList<ARP_CACHE> cache_table) {
 		
 		if (arpModel.getRowCount() > 0) 

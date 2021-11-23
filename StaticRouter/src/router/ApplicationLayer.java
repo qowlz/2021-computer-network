@@ -253,6 +253,10 @@ public class ApplicationLayer extends BaseLayer{
 		
 		
 	}
+	
+	public void updateRoutingTable(ArrayList<ROUTING_ENRTY> routing_table) {
+		
+	}
 	public void updateARPCacheTable(ArrayList<ARP_CACHE> cache_table) {
 		
 		if (arpModel.getRowCount() > 0) 

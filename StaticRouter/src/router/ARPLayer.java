@@ -9,7 +9,6 @@ import javax.swing.JOptionPane;
 public class ARPLayer extends BaseLayer{
 
 	private static ArrayList<ARP_CACHE> cache_table = new ArrayList<ARP_CACHE>();
-	private static ArrayList<Proxy> proxyEntry = new ArrayList<Proxy>();
 	
 	private static ApplicationLayer appLayer;
 	
@@ -54,6 +53,7 @@ public class ARPLayer extends BaseLayer{
 		RecvHeader = ByteToObj(input, ARP_HEADER.class);
 		
 		ARP_CACHE tempARP = getCache(RecvHeader.ip_src);
+<
 		if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
 
 		if(tempARP == null) { // 캐시테이블 미적중

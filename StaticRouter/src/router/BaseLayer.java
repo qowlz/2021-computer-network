@@ -246,7 +246,6 @@ public abstract class BaseLayer {
 		int idx=0;
 		
 		for (String s :  ip.split("\\.")) {
-			System.out.println(s);
 			result[idx++] = (byte)(Integer.parseInt(s));
 		}
 		return result;

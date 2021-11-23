@@ -23,7 +23,7 @@ public class LayerManager {
 
 		ni.SetUpperUnderLayer(eth);
 		eth.SetUpperUnderLayer(arp);
-		eth.SetUpperUnderLayer(ip);	
+		eth.SetUpperLayer(ip);
 		ip.SetUnderLayer(arp);
 		app.SetUnderLayer(ip);
 	}

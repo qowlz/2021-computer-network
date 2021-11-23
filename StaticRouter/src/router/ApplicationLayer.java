@@ -17,8 +17,6 @@ public class ApplicationLayer extends BaseLayer{
 
 	private JTable arpCacheTable;
 
-	private DefaultTableModel arpModel;
-	
 	public void CreateWindow()
 	{
 		final int windowWidth = 960;
@@ -99,14 +97,14 @@ public class ApplicationLayer extends BaseLayer{
 	}
 
 	public static void main(String[] args) {
-		
 		layerManager.AddLayer(new NILayer(Constants.NILayerName));
 		layerManager.AddLayer(new ARPLayer(Constants.ARPLayerName));
 		layerManager.AddLayer(new EthernetLayer(Constants.EthLayerName));
 		layerManager.AddLayer(new IPLayer(Constants.IPLayerName));
-		layerManager.AddLayer(new ApplicationLayer("App"));
-		
+		layerManager.AddLayer(new ApplicationLayer(Constants.AppLayerName));
+		((ARPLayer)layerManager.GetLayer(Constants.ARPLayerName)).setArpAppLayer(((ApplicationLayer)layerManager.GetLayer(Constants.AppLayerName)));
 		layerManager.ConnectLayers();
+		((NILayer)layerManager.GetLayer(Constants.NILayerName)).Receive();
 	}
 	public class ProxyTableAddPopup extends JFrame {
 
@@ -197,7 +195,7 @@ public class ApplicationLayer extends BaseLayer{
 			contentPane.add(interfaceLabel);
 			
 			Ninterface = new JComboBox();
-			Ninterface.setBounds(170,180,100,20);
+			Ninterface.setBounds(170,180,220,20);
 			contentPane.add(Ninterface);
 			NILayer NI = (NILayer) layerManager.GetLayer(Constants.NILayerName); 
 			for (PcapIf pcapIf : NI.getAdapterList()) {
@@ -258,6 +256,8 @@ public class ApplicationLayer extends BaseLayer{
 	}
 	
 	public void updateARPCacheTable(ArrayList<ARP_CACHE> cache_table) {
+		
+		DefaultTableModel arpModel = (DefaultTableModel)arpCacheTable.getModel();
 		
 		if (arpModel.getRowCount() > 0) 
 		    for (int i = arpModel.getRowCount() - 1; i > -1; i--)

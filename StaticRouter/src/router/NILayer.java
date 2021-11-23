@@ -17,22 +17,22 @@ public class NILayer extends BaseLayer {
 	public static ArrayList<PcapIf> allDevs = new ArrayList<PcapIf>();
 	private StringBuilder errbuf = new StringBuilder();
 	
-	private ArrayList<Pcap> adapters;
+	private ArrayList<Pcap> adapters = new ArrayList<Pcap>();
 	
-	public static byte[] srcMacAddress;
+	public static byte[] srcMacAddress = null;
 	
-	public static byte[] srcIpAddress;
+	public static byte[] srcIpAddress = null;
 	
-	private Pcap pcap;
+	public static int pcapIdx;
 
 	public NILayer(String pName) {
 		pLayerName = pName;	
 		
 		Pcap.findAllDevs(allDevs, errbuf);
 		
-		for (var device : allDevs)
+		for (PcapIf device : allDevs)
 		{
-			var pcap = Pcap.openLive(device.getName(), 65536, Pcap.MODE_PROMISCUOUS, 10 * 1000, errbuf);
+			Pcap pcap = Pcap.openLive(device.getName(), 1000, Pcap.MODE_PROMISCUOUS, 1, errbuf);
 			if (pcap != null)
 				adapters.add(pcap);
 		}
@@ -53,8 +53,8 @@ public class NILayer extends BaseLayer {
 	@Override
 	public boolean Send(byte[] data) {
 		ByteBuffer buf = ByteBuffer.wrap(data);
-		if (pcap.sendPacket(buf) != Pcap.OK) {
-			System.err.println(pcap.getErr());
+		if (adapters.get(pcapIdx).sendPacket(buf) != Pcap.OK) {
+			System.err.println(adapters.get(pcapIdx).getErr());
 			return false;
 		}
 		return true;
@@ -77,25 +77,31 @@ class Receive_Thread implements Runnable {
 
 	@Override
 	public void run() {
-		int id = JRegistry.mapDLTToId(adapter.datalink());
-		PcapHeader header = new PcapHeader(JMemory.POINTER);
-		JBuffer buff = new JBuffer(JMemory.POINTER);
 		while (true) {
+	
 			for (int i = 0; i < adapters.size(); i++){
-				var adapter = adapters.get(i);
+				Pcap adapter = adapters.get(i);
+				NILayer.pcapIdx = i;
+				int id = JRegistry.mapDLTToId(adapter.datalink());
+				PcapHeader header = new PcapHeader(JMemory.POINTER);
+				JBuffer buff = new JBuffer(JMemory.POINTER);
+
 				if (adapter.nextEx(header, buff) != Pcap.NEXT_EX_OK) continue;
-				
+
 				var packet = new PcapPacket(header, buff);
 				packet.scan(id);
 				data = packet.getByteArray(0, packet.size());
-				var device = NILayer.allDevs.get(i);
-				srcMacAddress = device.getHardwareAddress();
-				srcIpAddress = device.getAddresses().get(0).getAddr().getData();
+				PcapIf device = NILayer.allDevs.get(i);
+				try {
+					NILayer.srcMacAddress = device.getHardwareAddress();
+				} catch (IOException e) {}
+
+				NILayer.srcIpAddress = device.getAddresses().get(0).getAddr().getData();
 				UpperLayer.Receive(data);
 			}
 		}
-		adapter.close();
-		System.exit(0);
+		//adapter.close();
+		//System.exit(0);
 	}
 
 }

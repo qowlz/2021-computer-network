@@ -34,15 +34,15 @@ public class IPLayer extends BaseLayer {
         
         ROUTING_ENRTY entry = getEntry(RecvHeader.ip_dst); // entry 검색
         
-        if (entry != null && !entry.flag.contains("U")) { // 적중
-        	
+        if (entry != null && entry.flag.contains("U")) { // 적중
+        	System.out.println("ok");
     		if(Arrays.equals(getMaskedIP(RecvHeader.ip_dst, StrToIp(entry.mask)), StrToIp(entry.dst))) { // 동일 LAN
-    			
+    			System.out.println("same lan");
     			ARP_CACHE cache = ARP.getCache(RecvHeader.ip_dst);
     			
 				SendHeader.ip_dst = RecvHeader.ip_dst;
-				SendHeader.ip_src = srcIpAddress;
-				ARP.SendHeader.mac_src = srcMacAddress;
+				SendHeader.ip_src = NILayer.srcIpAddress;
+				ARP.SendHeader.mac_src = NILayer.srcMacAddress;
     			
     			if (cache != null) { // arp 적중
     				SendHeader.data = input;
@@ -65,7 +65,6 @@ public class IPLayer extends BaseLayer {
         	
         	return true;	
         } 
-
         return false;
     }
     

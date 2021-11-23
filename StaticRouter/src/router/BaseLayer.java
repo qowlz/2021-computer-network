@@ -53,18 +53,24 @@ public abstract class BaseLayer {
     	}
     }
     
-    public static class Proxy{
-    	public byte[] ip = new byte[4];
-    	public byte[] mac = new byte[6];
+    public static class ROUTING_ENRTY{
+    	public String dst = new String();
+    	public String mask = new String();
+    	public String gateway = new String();
+    	public String flag = new String();
+    	public String Interface = new String();
+    	public String Metric = new String();
     	
-    	public Proxy(byte[] ip, byte[] mac) {
-    		this.ip = ip;
-    		this.mac = mac;
+    	public ROUTING_ENRTY(String dst, String mask, String gateway, String flag, String Interface, String Metric) {
+    		this.dst = dst;
+    		this.mask = mask;
+    		this.gateway = gateway;
+    		this.flag = flag;
+    		this.Interface = Interface;
+    		this.Metric = Metric;
     	}
     }
     
-	public static byte[] macAddress = new byte[6];
-	public static byte[] ipAddress = new byte[4];
 	
 	public int nUpperLayerCount = 0;
 	public int nUnderLayerCount = 0;

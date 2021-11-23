@@ -133,12 +133,12 @@ public class ApplicationLayer extends BaseLayer{
 			contentPane.setLayout(null);
 			
 			JLabel ProxyEntryIpLabel = new JLabel("Destination");
-			ProxyEntryIpLabel.setFont(new Font("µ¸¿ò", Font.BOLD, 10));
+			ProxyEntryIpLabel.setFont(new Font("ï¿½ï¿½ï¿½ï¿½", Font.BOLD, 10));
 			ProxyEntryIpLabel.setBounds(25, 35, 75, 35);
 			contentPane.add(ProxyEntryIpLabel);
 			
 			JLabel proxyEntryEthernetLabel = new JLabel("NetMask");
-			proxyEntryEthernetLabel.setFont(new Font("µ¸¿ò", Font.BOLD, 10));
+			proxyEntryEthernetLabel.setFont(new Font("ï¿½ï¿½ï¿½ï¿½", Font.BOLD, 10));
 			proxyEntryEthernetLabel.setBounds(25, 70, 135, 35);
 			contentPane.add(proxyEntryEthernetLabel);
 			
@@ -164,7 +164,7 @@ public class ApplicationLayer extends BaseLayer{
 			});
 			
 			JLabel gatewayLabel = new JLabel("Gateway");
-			gatewayLabel.setFont(new Font("µ¸¿ò", Font.BOLD, 10));
+			gatewayLabel.setFont(new Font("ï¿½ï¿½ï¿½ï¿½", Font.BOLD, 10));
 			gatewayLabel.setBounds(25, 105, 135, 35);
 			contentPane.add(gatewayLabel);
 			
@@ -174,7 +174,7 @@ public class ApplicationLayer extends BaseLayer{
 			contentPane.add(Gateway);
 			
 			JLabel flagLabel = new JLabel("Flag");
-			flagLabel.setFont(new Font("µ¸¿ò", Font.BOLD, 10));
+			flagLabel.setFont(new Font("ï¿½ï¿½ï¿½ï¿½", Font.BOLD, 10));
 			flagLabel.setBounds(25, 140, 135, 35);
 			contentPane.add(flagLabel);
 			
@@ -190,7 +190,7 @@ public class ApplicationLayer extends BaseLayer{
 			contentPane.add(FlagH);
 
 			JLabel interfaceLabel = new JLabel("Interface");
-			interfaceLabel.setFont(new Font("µ¸¿ò", Font.BOLD, 10));
+			interfaceLabel.setFont(new Font("ï¿½ï¿½ï¿½ï¿½", Font.BOLD, 10));
 			interfaceLabel.setBounds(25, 175, 135, 35);
 			contentPane.add(interfaceLabel);
 			
@@ -251,9 +251,13 @@ public class ApplicationLayer extends BaseLayer{
 		
 		
 	}
+	
+	public void updateRoutingTable(ArrayList<ROUTING_ENRTY> routing_table) {
+		
+	}
 	public void updateARPCacheTable(ArrayList<ARP_CACHE> cache_table) {
 		
-		// ¸ðµç Çà »èÁ¦
+		// ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		if (arpModel.getRowCount() > 0) 
 		    for (int i = arpModel.getRowCount() - 1; i > -1; i--)
 		        arpModel.removeRow(i);

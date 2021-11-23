@@ -29,6 +29,7 @@ public class ARPLayer extends BaseLayer{
 		IP_HEADER UpperHeader = ByteToObj(input, IP_HEADER.class);
 		
 		SendHeader.ip_dst = Arrays.copyOf(UpperHeader.ip_dst, 4);
+<<<<<<< HEAD
 		SendHeader.opcode = 0x01; // request Ÿ��
 		SendHeader.ip_src = Arrays.copyOf(ipAddress,4);
 		SendHeader.mac_src = Arrays.copyOf(macAddress,6); // �۽��� �������� ����
@@ -36,6 +37,15 @@ public class ARPLayer extends BaseLayer{
 		// ������ ip�� arpapp layer���� ����
 		
 		if(getCache(SendHeader.ip_dst) == null && Arrays.equals(SendHeader.ip_src, SendHeader.ip_dst) != true) { // ����� ������ �ּҰ� ���ų� ���ο��� �����°� ����
+=======
+		SendHeader.opcode = 0x01; // request 타입
+		SendHeader.ip_src = Arrays.copyOf(ipAddress,4);
+		SendHeader.mac_src = Arrays.copyOf(macAddress,6); // 송신지 본인으로 설정
+		SendHeader.mac_dst = new byte[] {-1,-1,-1,-1,-1,-1}; // 수신지 브로드캐스팅
+		// 목적지 ip는 arpapp layer에서 설정
+		
+		if(getCache(SendHeader.ip_dst) == null && Arrays.equals(SendHeader.ip_src, SendHeader.ip_dst) != true) { // 헤더에 목적지 주소가 없거나 본인에게 보내는거 제외
+>>>>>>> af3553c4aeee5a61f6c1f75e0bb014e562284b8d
 			byte[] tempMac = new byte[6];
 			ARP_CACHE arpcache = new ARP_CACHE(SendHeader.ip_dst, tempMac, false);
 			addCacheTable(arpcache);
@@ -53,6 +63,7 @@ public class ARPLayer extends BaseLayer{
 		RecvHeader = ByteToObj(input, ARP_HEADER.class);
 		
 		ARP_CACHE tempARP = getCache(RecvHeader.ip_src);
+<<<<<<< HEAD
 		if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // �۽����� �����̸� ����
 
 		if(tempARP == null) { // ĳ�����̺� ������
@@ -73,12 +84,39 @@ public class ARPLayer extends BaseLayer{
 				SendHeader.mac_dst = Arrays.copyOf(RecvHeader.mac_src,6); // �������� ��������
 				SendHeader.mac_src = macAddress; // �۽��� �ٽ�����
 				SendHeader.ip_src = ipAddress; // �۽��� ip ���� ����
+=======
+		if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
+
+		if(tempARP == null) { // 캐시테이블 미적중
+			ARP_CACHE arpCache = new ARP_CACHE(RecvHeader.ip_src, RecvHeader.mac_src, true);
+			addCacheTable(arpCache); // 새로 만들어서 추가
+		}else {  // 캐시테이블 적중
+			tempARP.status = true;
+			tempARP.mac = Arrays.copyOf(RecvHeader.mac_src, 6); // 수신받은 데이터의 송신지로 덮어쓰기
+		}
+		updateCacheTable();
+
+		switch (RecvHeader.opcode) { // arp 패킷 옵코드로 분류
+		case 0x01: // request
+
+			if(Arrays.equals(RecvHeader.ip_dst, ipAddress)) {	// 수신지가 본인이면
+				SendHeader.opcode = 0x02; // reply
+				SendHeader.ip_dst = Arrays.copyOf(RecvHeader.ip_src,4); // 수신지를 목적지로
+				SendHeader.mac_dst = Arrays.copyOf(RecvHeader.mac_src,6); // 수신지를 목적지로
+				SendHeader.mac_src = macAddress; // 송신지 다시지정
+				SendHeader.ip_src = ipAddress; // 송신지 ip 나로 지정
+>>>>>>> af3553c4aeee5a61f6c1f75e0bb014e562284b8d
 				GetUnderLayer(0).Send(ObjToByte(SendHeader));
 			}
 			break;
 		case 0x02: // reply
+<<<<<<< HEAD
 			System.out.println("ARP ���� ����");
 			// ���� �Ϸ�
+=======
+			System.out.println("ARP 응답 수신");
+			// 수신 완료
+>>>>>>> af3553c4aeee5a61f6c1f75e0bb014e562284b8d
 			break;
 		}
 		return true;

@@ -27,7 +27,7 @@ public class NILayer extends BaseLayer {
 		Pcap.findAllDevs(allDevs, errbuf);
 		
 		if (allDevs.isEmpty()) {
-			System.out.println("³×Æ®¿öÅ© ¾îµªÅÍ°¡ ¾ø½À´Ï´Ù.");
+			System.out.println("ë„¤íŠ¸ì›Œí¬ ì–´ëí„°ê°€ ì—†ìŠµë‹ˆë‹¤.");
 			return;
 		}
 	}
@@ -39,10 +39,10 @@ public class NILayer extends BaseLayer {
 			macAddress = device.getHardwareAddress();
 			ipAddress = device.getAddresses().get(0).getAddr().getData();
 			System.out.println(MacToStr(macAddress));
-		} catch (IOException e) { System.out.println("ÁÖ¼Ò¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù."); }
+		} catch (IOException e) { System.out.println("ì£¼ì†Œë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤."); }
 
 		if (pcap == null) {
-			System.out.printf("pcap °´Ã¼ »ı¼º½ÇÆĞ - %s\n", errbuf.toString());
+			System.out.printf("pcap ê°ì²´ ìƒì„±ì‹¤íŒ¨ - %s\n", errbuf.toString());
 			return false;
 		}	return true;
 	}

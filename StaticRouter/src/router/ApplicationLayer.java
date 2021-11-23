@@ -9,6 +9,7 @@ import org.jnetpcap.PcapIf;
 import router.BaseLayer.ARP_CACHE;
 
 import java.awt.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -199,13 +200,18 @@ public class ApplicationLayer extends BaseLayer{
 			contentPane.add(Ninterface);
 			NILayer NI = (NILayer) layerManager.GetLayer(Constants.NILayerName); 
 			for (PcapIf pcapIf : NI.getAdapterList()) {
-				Ninterface.addItem(pcapIf.getName());
+				try {
+					Ninterface.addItem(pcapIf.getDescription() + "[" + MacToStr(pcapIf.getHardwareAddress()) + "]");
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 			routeTableAddBtn.addActionListener(e -> {
 				String dst = DstIp.getText().trim();
 				String netMask = NetMask.getText().trim();
 				String gateway = Gateway.getText().trim();
-				String nInf = Ninterface.getSelectedItem().toString().trim();
+				String nInf = Integer.toString(Ninterface.getSelectedIndex());
 				String flag = new String();
 				if (!dst.equals("") && !netMask.equals("")&& !gateway.equals("") && !nInf.equals("")) {
 					if (FlagU.isSelected()) flag+="U";

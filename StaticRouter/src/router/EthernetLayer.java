@@ -16,16 +16,19 @@ public class EthernetLayer extends BaseLayer {
 	@Override
 	public boolean Send(byte[] input) {
 		// log("sending packet to under layer");
+		ARP_HEADER UpperHeader = ByteToObj(input, ARP_HEADER.class);
+		SendHeader.mac_dst = UpperHeader.mac_dst;
+		SendHeader.mac_src = UpperHeader.mac_src;
 		
 		if (SendHeader.frame_type == 0x0800) { // ip에서 날라온거
-			System.out.println("IP Send Packet");
-			System.out.println(SendHeader.frame_type);
-			System.out.println(MacToStr(SendHeader.mac_src) + " -> " + MacToStr(SendHeader.mac_dst));
+			//System.out.println("IP Send Packet");
+
+			//System.out.println(MacToStr(SendHeader.mac_src) + " -> " + MacToStr(SendHeader.mac_dst));
 			this.GetUnderLayer(0).Send(ObjToByte(SendHeader));
 			return true;
 			
 		}else {
-			ARP_HEADER UpperHeader = ByteToObj(input, ARP_HEADER.class);
+			
 
 			SendHeader.frame_type = 0x0806; // arp 타입
 
@@ -61,7 +64,7 @@ public class EthernetLayer extends BaseLayer {
 		if( (Arrays.equals(RecvHeader.mac_dst, NILayer.srcMacAddress)) ) { // 수신지가 브로드캐스팅 이거나 나 일경우 수신
 
 			if(RecvHeader.frame_type == 0x0806){ // arp 타입이면
-				System.out.println("To ARP Layer");
+				//System.out.println("To ARP Layer");
 				System.out.println(MacToStr(RecvHeader.mac_src) + " -> " + MacToStr(RecvHeader.mac_dst));
 				((ARPLayer)GetUpperLayer(0)).Receive(RecvHeader.data);
 				return true;

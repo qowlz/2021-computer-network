@@ -34,8 +34,9 @@ public class ARPLayer extends BaseLayer{
 		SendHeader.ip_src = UpperHeader.ip_src;
 		SendHeader.mac_dst = new byte[] {-1,-1,-1,-1,-1,-1}; // 수신지 브로드캐스팅
 		
+		
 		if (UpperHeader.data.length > 1) { // arp req가 아닌 데이터의 경우 이더넷으로 패스
-			System.out.println("pass to ether");
+			//System.out.println("pass to ether");
 			UnderLayer.SendHeader.mac_src = SendHeader.mac_src;
 			UnderLayer.SendHeader.data = UpperHeader.data;
 			UnderLayer.SendHeader.frame_type = 0x0800;
@@ -53,7 +54,8 @@ public class ARPLayer extends BaseLayer{
 			
 			updateCacheTable();
 		}
-		System.out.println("ARP 요청 송신");
+		//System.out.println("ARP 요청 송신");
+		System.out.println(MacToStr(SendHeader.mac_src) + " -> " + MacToStr(SendHeader.mac_dst));
 		GetUnderLayer(0).Send(ObjToByte(SendHeader));
 		return true;
 	}
@@ -78,9 +80,9 @@ public class ARPLayer extends BaseLayer{
 
 		switch (RecvHeader.opcode) { // arp 패킷 옵코드로 분류
 		case 0x01: // request
-			System.out.println("ARP 요청 수신");
+			//System.out.println("ARP 요청 수신");
 			if(Arrays.equals(RecvHeader.ip_dst, NILayer.srcIpAddress)) {	// 수신지가 본인이면
-				System.out.println("ARP 응답 송신");
+				//System.out.println("ARP 응답 송신");
 				ARP_HEADER NewSendHeader = new ARP_HEADER();
 				NewSendHeader.opcode = 0x02; // reply
 				NewSendHeader.ip_dst = Arrays.copyOf(RecvHeader.ip_src,4); // 수신지를 목적지로

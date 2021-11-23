@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 public class LayerManager {
 
-	HashMap<String, BaseLayer> layerMap;
+	HashMap<String, BaseLayer> layerMap = new HashMap<String, BaseLayer>();
 	
 	public void AddLayer(BaseLayer layer){
 		layerMap.put(layer.pLayerName, layer);

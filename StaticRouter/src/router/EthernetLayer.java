@@ -2,6 +2,8 @@ package router;
 
 import java.util.Arrays;
 
+import router.BaseLayer.IP_HEADER;
+
 public class EthernetLayer extends BaseLayer {
 
 	ETHERNET_HEADER SendHeader = new ETHERNET_HEADER();
@@ -14,10 +16,6 @@ public class EthernetLayer extends BaseLayer {
 	@Override
 	public boolean Send(byte[] input) {
 		// log("sending packet to under layer");
-		
-		SendHeader.data = input; // 데이터 넣기
-		SendHeader.mac_src = Arrays.copyOf(macAddress,6); // 송신지 설정	
-		
 		
 		if (SendHeader.frame_type == 0x0800) { // ip에서 날라온거
 			System.out.println("IP Send Packet");
@@ -50,22 +48,34 @@ public class EthernetLayer extends BaseLayer {
 	
 	public synchronized boolean Receive(byte[] input) {
 
-
 		RecvHeader = ByteToObj(input, ETHERNET_HEADER.class);
+
+		NILayer UnderLayer = null;
 		
-		if (Arrays.equals(RecvHeader.mac_src, macAddress))
+		for (BaseLayer ni : p_aUnderLayer) { // 목적지 mac과 동일한 mac의 nilayer를 갖고옴
+			if (Arrays.equals(RecvHeader.mac_dst, ((NILayer)ni).macAddress)) {
+				UnderLayer = ((NILayer)ni);
+				break;
+			}		
+		}
+		
+		if (UnderLayer == null && !isBroadcast(RecvHeader.mac_dst)) // 브로드캐스트 주소가 아닌데 매칭되는 nilayer가 없을때 종료
+			return false;
+		
+		if (Arrays.equals(RecvHeader.mac_src, UnderLayer.macAddress)) // 본인이 수신지 일경우 종료
 			return false;
 		
 		System.out.println(MacToStr(RecvHeader.mac_src) + " -> " + MacToStr(RecvHeader.mac_dst));
 		
-		if( (isBroadcast(RecvHeader.mac_dst) || Arrays.equals(RecvHeader.mac_dst, macAddress))) { // 수신지가 브로드캐스팅 이거나 나 일경우 수신
+		if( (Arrays.equals(RecvHeader.mac_dst, UnderLayer.macAddress)) ) { // 수신지가 브로드캐스팅 이거나 나 일경우 수신
 			System.out.println(RecvHeader.frame_type);
 			if(RecvHeader.frame_type == 0x0806){ // arp 타입이면
 				System.out.println("To ARP Layer");
-				this.GetUpperLayer(0).Receive(RecvHeader.data);
+				((ARPLayer)GetUpperLayer(0)).Receive(RecvHeader.data, UnderLayer.interfaceID);
 				return true;
 			}else if(RecvHeader.frame_type == 0x0800) { // IP 타입이면
 				System.out.println("이더넷 IP 받음" + GetUpperLayer(1).GetLayerName() + "으로 전송");
+				
 				this.GetUpperLayer(1).Receive(RecvHeader.data);
 				return true;
 			}

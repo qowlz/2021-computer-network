@@ -27,12 +27,21 @@ public class ARPLayer extends BaseLayer{
 	public boolean Send(byte[] input) {
 	
 		IP_HEADER UpperHeader = ByteToObj(input, IP_HEADER.class);
+		EthernetLayer UnderLayer = (EthernetLayer) GetUnderLayer(0);
 		
-		SendHeader.ip_dst = Arrays.copyOf(UpperHeader.ip_dst, 4);
+		SendHeader.ip_dst = UpperHeader.ip_dst;
 		SendHeader.opcode = 0x01; // request 타입
-		SendHeader.ip_src = Arrays.copyOf(ipAddress,4);
-		SendHeader.mac_src = Arrays.copyOf(macAddress,6); // 송신지 본인으로 설정
+		SendHeader.ip_src = UpperHeader.ip_src;
 		SendHeader.mac_dst = new byte[] {-1,-1,-1,-1,-1,-1}; // 수신지 브로드캐스팅
+		
+		if (UpperHeader.data.length < 1) { // arp req가 아닌 데이터의 경우 이더넷으로 패스
+			UnderLayer.SendHeader.mac_src = SendHeader.mac_src;
+			UnderLayer.SendHeader.data = UpperHeader.data;
+			UnderLayer.SendHeader.frame_type = 0x0800;
+			UnderLayer.Send(ObjToByte(SendHeader));
+			return true;
+		}
+			
 		// 목적지 ip는 arpapp layer에서 설정
 		
 		if(getCache(SendHeader.ip_dst) == null && Arrays.equals(SendHeader.ip_src, SendHeader.ip_dst) != true) { // 헤더에 목적지 주소가 없거나 본인에게 보내는거 제외
@@ -47,14 +56,16 @@ public class ARPLayer extends BaseLayer{
 		return true;
 	}
 	//receive
-	@Override
-	public boolean Receive(byte[] input) {
 
+	public boolean Receive(byte[] input, int interfaceID) {
+	
+		ETHERNET_HEADER UnderHeader = ByteToObj(input, ETHERNET_HEADER.class);
+		NILayer ni = (NILayer) GetUnderLayer(0).GetUnderLayer(interfaceID);
 		RecvHeader = ByteToObj(input, ARP_HEADER.class);
 		
 		ARP_CACHE tempARP = getCache(RecvHeader.ip_src);
-<
-		if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // 송신지가 본인이면 종료
+
+		if(Arrays.equals(RecvHeader.ip_src, ni.ipAddress)) return false; // 송신지가 본인이면 종료
 
 		if(tempARP == null) { // 캐시테이블 미적중
 			ARP_CACHE arpCache = new ARP_CACHE(RecvHeader.ip_src, RecvHeader.mac_src, true);
@@ -68,13 +79,15 @@ public class ARPLayer extends BaseLayer{
 		switch (RecvHeader.opcode) { // arp 패킷 옵코드로 분류
 		case 0x01: // request
 
-			if(Arrays.equals(RecvHeader.ip_dst, ipAddress)) {	// 수신지가 본인이면
-				SendHeader.opcode = 0x02; // reply
-				SendHeader.ip_dst = Arrays.copyOf(RecvHeader.ip_src,4); // 수신지를 목적지로
-				SendHeader.mac_dst = Arrays.copyOf(RecvHeader.mac_src,6); // 수신지를 목적지로
-				SendHeader.mac_src = macAddress; // 송신지 다시지정
-				SendHeader.ip_src = ipAddress; // 송신지 ip 나로 지정
-				GetUnderLayer(0).Send(ObjToByte(SendHeader));
+			if(Arrays.equals(RecvHeader.ip_dst, ni.ipAddress)) {	// 수신지가 본인이면
+				
+				ARP_HEADER NewSendHeader = new ARP_HEADER();
+				NewSendHeader.opcode = 0x02; // reply
+				NewSendHeader.ip_dst = Arrays.copyOf(RecvHeader.ip_src,4); // 수신지를 목적지로
+				NewSendHeader.mac_dst = Arrays.copyOf(RecvHeader.mac_src,6); // 수신지를 목적지로
+				NewSendHeader.mac_src = UnderHeader.mac_dst; // 송신지 다시지정
+				NewSendHeader.ip_src = ni.ipAddress; // 송신지 ip 나로 지정
+				GetUnderLayer(0).Send(ObjToByte(NewSendHeader));
 			}
 			break;
 		case 0x02: // reply

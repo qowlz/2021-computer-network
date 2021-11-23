@@ -19,6 +19,7 @@ public class NILayer extends BaseLayer {
     
 	public byte[] macAddress = new byte[6];
 	public byte[] ipAddress = new byte[4];
+	public int interfaceID = 0;
 	
 	private Pcap pcap;
 	
@@ -39,6 +40,7 @@ public class NILayer extends BaseLayer {
 		PcapIf device = allDevs.get(idx);
 		pcap = Pcap.openLive(device.getName(), snaplen, flags, timeout, errbuf);
 		try {
+			interfaceID = idx;
 			macAddress = device.getHardwareAddress();
 			ipAddress = device.getAddresses().get(0).getAddr().getData();
 			System.out.println(MacToStr(macAddress));

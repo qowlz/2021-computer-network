@@ -34,23 +34,24 @@ public class IPLayer extends BaseLayer {
         
         ROUTING_ENRTY entry = getEntry(RecvHeader.ip_dst); // entry 검색
         
-        if (entry != null) { // 적중
+        if (entry != null && !entry.flag.contains("U")) { // 적중
         	
     		if(Arrays.equals(getMaskedIP(RecvHeader.ip_dst, StrToIp(entry.mask)), StrToIp(entry.dst))) { // 동일 LAN
     			
+				NILayer NI = (NILayer) Ethernet.GetUnderLayer(Integer.parseInt(entry.Interface)); // 선택된 엔트리의 ni 인덱스로 가져옴		
     			ARP_CACHE cache = ARP.getCache(RecvHeader.ip_dst);
+    			
+				SendHeader.ip_dst = RecvHeader.ip_dst;
+				SendHeader.ip_src = NI.ipAddress;
+				ARP.SendHeader.mac_src = NI.macAddress;
+    			
     			if (cache != null) { // arp 적중
-    				
-    				return true
+    				SendHeader.data = input;
+    				ARP.Send(ObjToByte(SendHeader)); // 패킷 패스
+    				return true;
     			}else { // arp 미적중
-    				
-    				NILayer NI = (NILayer) Ethernet.GetUnderLayer(Integer.parseInt(entry.Interface)); // 선택된 엔트리의 ni 인덱스로 가져옴
-    				
+    					
     				SendHeader.data = new byte[0];
-    				SendHeader.ip_dst = RecvHeader.ip_dst;
-    				SendHeader.ip_src = StrToIp(entry.dst);
-    				SendHeader.
-    				
     				ARP.Send(ObjToByte(SendHeader)); // arp req 전송
     	            System.out.println("arp req 전송");
     	            
@@ -60,7 +61,7 @@ public class IPLayer extends BaseLayer {
     			}
     			
     		}else if (entry.flag.contains("G")) { // 게이트웨이로 전달
-        		
+
         	}
         	
         	return true;	
@@ -90,15 +91,22 @@ public class IPLayer extends BaseLayer {
     }
     public ROUTING_ENRTY getEntry(byte[] ip) {
     	Iterator<ROUTING_ENRTY> iter = RoutingTable.iterator();
+    	
+    	ROUTING_ENRTY longest_entry = null;
+    	int longest_prefix = 0;
+
     	while(iter.hasNext()) {
     		ROUTING_ENRTY entry = iter.next();
     		if(Arrays.equals(getMaskedIP(ip,StrToIp(entry.mask)), StrToIp(entry.dst))) {
-    			return entry;
+    			if (longest_prefix < entry.gateway.split("255").length-1) {
+    				longest_entry = entry;
+    				longest_prefix = entry.gateway.split("255").length-1;
+    			}
     		}
     	}
-    	return null;
+
+		return longest_entry;
     }
-	       
     public void updateCache() {
     	((ApplicationLayer)layerManager.GetLayer(Constants.AppLayerName)).updateRoutingTable(RoutingTable);
     }

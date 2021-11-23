@@ -77,6 +77,8 @@ public abstract class BaseLayer {
 	
 	public ArrayList<BaseLayer> p_aUnderLayer = new ArrayList<BaseLayer>();
 	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
+	
+	public static LayerManager layerManager = new LayerManager();
 
 	public String pLayerName = null;
 	
@@ -254,6 +256,14 @@ public abstract class BaseLayer {
 		for (byte val : addr) 
 			if (val != (byte)0xFF) return false;
 		return true;
+	}
+	
+	public static byte[] getMaskedIP(byte[] addr, byte[] mask) {
+		byte[] ip = new byte[4];
+		for(int idx=0; idx < 4; idx++){
+			ip[idx] = (byte) (addr[idx] & mask[idx]);
+		}
+		return ip;
 	}
 
 }

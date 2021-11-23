@@ -9,74 +9,63 @@ public class IPLayer extends BaseLayer {
 	IP_HEADER SendHeader = new IP_HEADER();
 	IP_HEADER RecvHeader = new IP_HEADER();
 
+	public ArrayList<byte[]> packet_queue = new ArrayList<byte[]>();
+	
 	public static ArrayList<ROUTING_ENRTY> RoutingTable = new ArrayList<ROUTING_ENRTY>();
 
-	private static ApplicationLayer appLayer;
-	
-	public void setIpAppLayer(ApplicationLayer Layer) {
-		this.appLayer = Layer;
-	}
-	
     public IPLayer(String pName) {
         pLayerName = pName;
     }
 
     @Override
-    public boolean Send(byte[] input) {
-
-        SendHeader.ip_src = ipAddress;
-        SendHeader.data = input;
-
-        ARPLayer ARP = (ARPLayer) GetUnderLayer(0);
-        ARP_CACHE cache = ARP.getCache(SendHeader.ip_dst); // Cache Table에 목적지 주소의 IP가 있는지 확인 -> 없으면 null
-
-        // Cache Table에 목적지 IP 주소가 없거나 / 2. 목적지 IP 주소가 본인 IP 주소인 경우 (GARP) / 3. 데이터가 없는 경우
-        if (cache == null || Arrays.equals(SendHeader.ip_dst, ipAddress) || UpperHeader.data.length == 0) {
-            ARP.SendHeader.ip_dst = Arrays.copyOf(SendHeader.ip_dst, 4); // ARP 목적지 IP 주소 변경
-            EthernetLayer Ethernet = (EthernetLayer) GetUnderLayer(1);
-            Ethernet.SendHeader.frame_type = 0x0806; // Type 지정
-
-            if (UpperHeader.data.length != 0) { // 데이터는 있지만 목적지에 도착하지 않은 경우 (NOT GARP)
-                IP_HEADER Packet = new IP_HEADER(); // Packet 객체 생성
-                Packet = ByteToObj(ObjToByte(SendHeader), IP_HEADER.class);
-                packet_queue.add(Packet); // 불발된 패킷 큐에 넣기
-                SendHeader.data = new byte[0]; // Data 부분은 제거하고 헤더만 전달
-            }
-
-            byte[] b = ObjToByte(SendHeader);
-            ARP.Send(Arrays.copyOf(b, b.length)); // ARP로 전달
-        } else {
-            EthernetLayer Ethernet = (EthernetLayer) GetUnderLayer(1);
-            Ethernet.SendHeader.mac_dst = Arrays.copyOf(cache.mac, cache.mac.length); // Cache Table에 저장된 MAC 주소를 가져와 저장
-            Ethernet.SendHeader.frame_type = 0x0800; // Type 지정
-
-            SendHeader.ip_dst = cache.ip; // 목적지는 Cache Table에 저장된 IP
-            SendHeader.ip_version = 4; // IPv4
-
-            byte[] b = ObjToByte(SendHeader);
-
-            Ethernet.Send(Arrays.copyOf(b, b.length)); // Ethernet Layer로 전달
-        }
-
-        return true;
-    }
-
-    @Override
     public boolean Receive(byte[] input) {
+    	
         RecvHeader = ByteToObj(input, IP_HEADER.class);
+        
+		Iterator<byte[]> packet = packet_queue.iterator(); // 밀린패킷 우선처리
+		while (packet.hasNext()) {
+			byte[] recv_data = packet.next();
+			packet.remove();
+			Receive(recv_data);
+		}
+		
         ARPLayer ARP = (ARPLayer) GetUnderLayer(0);
+        EthernetLayer Ethernet = (EthernetLayer) ARP.GetUnderLayer(0);
+        
+        ROUTING_ENRTY entry = getEntry(RecvHeader.ip_dst); // entry 검색
+        
+        if (entry != null) { // 적중
+        	
+    		if(Arrays.equals(getMaskedIP(RecvHeader.ip_dst, StrToIp(entry.mask)), StrToIp(entry.dst))) { // 동일 LAN
+    			
+    			ARP_CACHE cache = ARP.getCache(RecvHeader.ip_dst);
+    			if (cache != null) { // arp 적중
+    				
+    				return true
+    			}else { // arp 미적중
+    				
+    				NILayer NI = (NILayer) Ethernet.GetUnderLayer(Integer.parseInt(entry.Interface)); // 선택된 엔트리의 ni 인덱스로 가져옴
+    				
+    				SendHeader.data = new byte[0];
+    				SendHeader.ip_dst = RecvHeader.ip_dst;
+    				SendHeader.ip_src = StrToIp(entry.dst);
+    				SendHeader.
+    				
+    				ARP.Send(ObjToByte(SendHeader)); // arp req 전송
+    	            System.out.println("arp req 전송");
+    	            
+    				packet_queue.add(input);
+    				System.out.println("packet queue에 추가됨");
+    				return false;
+    			}
+    			
+    		}else if (entry.flag.contains("G")) { // 게이트웨이로 전달
+        		
+        	}
+        	
+        	return true;	
+        } 
 
-        if (Arrays.equals(RecvHeader.ip_dst, ipAddress)) { // 자신의 IP 주소인 경우
-            ARP_CACHE cache = ARP.getCache(RecvHeader.ip_src); // 출발지 IP 주소가 Cache Table에 있는지 확인 -> 없으면 Null
-            if (cache == null) { //  자신의 IP 주소가 상대방 Arp Cache Table에만 있는 경우
-                EthernetLayer Ethernet = (EthernetLayer) GetUnderLayer(1);
-                cache = new ARP_CACHE(RecvHeader.ip_src, Ethernet.RecvHeader.mac_src, true); // 자신의 Cache Table에 상대방의 IP 주소, MAC 주소를 등록
-                ARP.addCacheTable(cache);
-            }
-            System.out.println(IpToStr(RecvHeader.ip_src) + "-IP_RECV>" + IpToStr(RecvHeader.ip_dst));
-            GetUpperLayer(0).Receive(RecvHeader.data);
-            return true;
-        }
         return false;
     }
     
@@ -92,8 +81,8 @@ public class IPLayer extends BaseLayer {
     	Iterator<ROUTING_ENRTY> iter = RoutingTable.iterator();
     	
     	while(iter.hasNext()) {
-    		ROUTING_ENRTY cache = iter.next();
-    		if(Arrays.equals(ip, cache.ip)) {
+    		ROUTING_ENRTY entry = iter.next();
+    		if(Arrays.equals(ip, StrToIp(entry.dst))) {
     			iter.remove();
     		}
     	}
@@ -102,16 +91,16 @@ public class IPLayer extends BaseLayer {
     public ROUTING_ENRTY getEntry(byte[] ip) {
     	Iterator<ROUTING_ENRTY> iter = RoutingTable.iterator();
     	while(iter.hasNext()) {
-    		ROUTING_ENRTY cache = iter.next();
-    		if(Arrays.equals(ip, cache.ip)) {
-    			return cache;
+    		ROUTING_ENRTY entry = iter.next();
+    		if(Arrays.equals(getMaskedIP(ip,StrToIp(entry.mask)), StrToIp(entry.dst))) {
+    			return entry;
     		}
     	}
     	return null;
     }
 	       
     public void updateCache() {
-    	appLayer.updateRoutingTable(RoutingTable);
+    	((ApplicationLayer)layerManager.GetLayer(Constants.AppLayerName)).updateRoutingTable(RoutingTable);
     }
 	    
 }

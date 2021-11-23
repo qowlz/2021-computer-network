@@ -34,7 +34,7 @@ public class ARPLayer extends BaseLayer{
 		SendHeader.ip_src = UpperHeader.ip_src;
 		SendHeader.mac_dst = new byte[] {-1,-1,-1,-1,-1,-1}; // 수신지 브로드캐스팅
 		
-		if (UpperHeader.data.length < 1) { // arp req가 아닌 데이터의 경우 이더넷으로 패스
+		if (UpperHeader.data.length > 1) { // arp req가 아닌 데이터의 경우 이더넷으로 패스
 			System.out.println("pass to ether");
 			UnderLayer.SendHeader.mac_src = SendHeader.mac_src;
 			UnderLayer.SendHeader.data = UpperHeader.data;
@@ -46,14 +46,14 @@ public class ARPLayer extends BaseLayer{
 		// 목적지 ip는 arpapp layer에서 설정
 		
 		if(getCache(SendHeader.ip_dst) == null && Arrays.equals(SendHeader.ip_src, SendHeader.ip_dst) != true) { // 헤더에 목적지 주소가 없거나 본인에게 보내는거 제외
-			System.out.println("ARP 요청 송신");
+			
 			byte[] tempMac = new byte[6];
 			ARP_CACHE arpcache = new ARP_CACHE(SendHeader.ip_dst, tempMac, false);
 			addCacheTable(arpcache);
 			
 			updateCacheTable();
 		}
-		
+		System.out.println("ARP 요청 송신");
 		GetUnderLayer(0).Send(ObjToByte(SendHeader));
 		return true;
 	}

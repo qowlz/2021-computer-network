@@ -142,12 +142,12 @@ public class ApplicationLayer extends BaseLayer{
 			proxyEntryEthernetLabel.setBounds(25, 70, 135, 35);
 			contentPane.add(proxyEntryEthernetLabel);
 			
-			DstIp = new JTextField();
+			DstIp = new JTextField("192.168.1.0");
 			DstIp.setBounds(170, 35, 220, 30);
 			contentPane.add(DstIp);
 			DstIp.setColumns(10);
 			
-			NetMask = new JTextField();
+			NetMask = new JTextField("255.255.255.0");
 			NetMask.setColumns(10);
 			NetMask.setBounds(170, 70, 220, 30);
 			contentPane.add(NetMask);
@@ -168,7 +168,7 @@ public class ApplicationLayer extends BaseLayer{
 			gatewayLabel.setBounds(25, 105, 135, 35);
 			contentPane.add(gatewayLabel);
 			
-			Gateway = new JTextField();
+			Gateway = new JTextField("0.0.0.0");
 			Gateway.setColumns(10);
 			Gateway.setBounds(170, 105, 220, 30);
 			contentPane.add(Gateway);

@@ -16,19 +16,26 @@ public class NILayer extends BaseLayer {
 
 	private ArrayList<PcapIf> allDevs = new ArrayList<PcapIf>();
 	private StringBuilder errbuf = new StringBuilder();
-    
-	public byte[] macAddress = new byte[6];
-	public byte[] ipAddress = new byte[4];
-	public int interfaceID = 0;
+	
+	private ArrayList<Pcap> adapters;
+	
+	public static byte[] srcMacAddress;
+	
+	public static byte[] srcIpAddress;
 	
 	private Pcap pcap;
-	
-	public static boolean exitProgram = false;
 
 	public NILayer(String pName) {
 		pLayerName = pName;	
 		
 		Pcap.findAllDevs(allDevs, errbuf);
+		
+		for (var device : allDevs)
+		{
+			var pcap = Pcap.openLive(device.getName(), 65536, Pcap.MODE_PROMISCUOUS, 10 * 1000, errbuf);
+			if (pcap != null)
+				adapters.add(pcap);
+		}
 		
 		if (allDevs.isEmpty()) {
 			System.out.println("네트워크 어뎁터가 없습니다.");
@@ -76,11 +83,11 @@ public class NILayer extends BaseLayer {
 
 class Receive_Thread implements Runnable {
 	private byte[] data;
-	private Pcap adapter;
+	private ArrayList<Pcap> adapters;
 	private BaseLayer UpperLayer;
 
-	public Receive_Thread(Pcap adt, BaseLayer upper) {
-		adapter = adt;
+	public Receive_Thread(ArrayList<Pcap> adts, BaseLayer upper) {
+		adapters = adts;
 		UpperLayer = upper;
 	}
 
@@ -89,11 +96,17 @@ class Receive_Thread implements Runnable {
 		int id = JRegistry.mapDLTToId(adapter.datalink());
 		PcapHeader header = new PcapHeader(JMemory.POINTER);
 		JBuffer buff = new JBuffer(JMemory.POINTER);
-		while (adapter.nextEx(header, buff) == Pcap.NEXT_EX_OK && NILayer.exitProgram != true) {
-			var packet = new PcapPacket(header, buff);
-			packet.scan(id);
-			data = packet.getByteArray(0, packet.size());
-			UpperLayer.Receive(data);
+		while (true) {
+			for (var adapter : adapters){
+				if (adapter.nextEx(header, buff) != Pcap.NEXT_EX_OK) continue;
+				
+				var packet = new PcapPacket(header, buff);
+				packet.scan(id);
+				data = packet.getByteArray(0, packet.size());
+				srcMacAddress = device.getHardwareAddress();
+				srcIpAddress = device.getAddresses().get(0).getAddr().getData();
+				UpperLayer.Receive(data);
+			}
 		}
 		adapter.close();
 		System.exit(0);

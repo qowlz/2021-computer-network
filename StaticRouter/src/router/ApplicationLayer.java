@@ -105,6 +105,8 @@ public class ApplicationLayer extends BaseLayer{
 		layerManager.AddLayer(new EthernetLayer(Constants.EthLayerName));
 		layerManager.AddLayer(new IPLayer(Constants.IPLayerName));
 		layerManager.AddLayer(new ApplicationLayer("App"));
+		
+		layerManager.ConnectLayers();
 	}
 	public class ProxyTableAddPopup extends JFrame {
 

@@ -16,7 +16,10 @@ public class NILayer extends BaseLayer {
 
 	private ArrayList<PcapIf> allDevs = new ArrayList<PcapIf>();
 	private StringBuilder errbuf = new StringBuilder();
-
+    
+	public byte[] macAddress = new byte[6];
+	public byte[] ipAddress = new byte[4];
+	
 	private Pcap pcap;
 	
 	public static boolean exitProgram = false;

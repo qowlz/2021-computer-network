@@ -9,7 +9,7 @@ public class IPLayer extends BaseLayer {
 	IP_HEADER SendHeader = new IP_HEADER();
 	IP_HEADER RecvHeader = new IP_HEADER();
 
-	public ArrayList<byte[]> packet_queue = new ArrayList<byte[]>();
+	public static ArrayList<byte[]> packet_queue = new ArrayList<byte[]>();
 	
 	public static ArrayList<ROUTING_ENRTY> RoutingTable = new ArrayList<ROUTING_ENRTY>();
 
@@ -22,12 +22,12 @@ public class IPLayer extends BaseLayer {
     	
         RecvHeader = ByteToObj(input, IP_HEADER.class);
         
-		Iterator<byte[]> packet = packet_queue.iterator(); // 밀린패킷 우선처리
-		while (packet.hasNext()) {
-			byte[] recv_data = packet.next();
-			packet.remove();
-			Receive(recv_data);
-		}
+		 int len = packet_queue.size();
+         for (int idx = len-1; idx >= 0; idx--) {
+        	 byte[] recv_data = packet_queue.get(idx);
+        	 packet_queue.remove(idx);
+        	 Receive(recv_data);
+         }
 		
         ARPLayer ARP = (ARPLayer) GetUnderLayer(0);
         EthernetLayer Ethernet = (EthernetLayer) ARP.GetUnderLayer(0);
@@ -35,13 +35,14 @@ public class IPLayer extends BaseLayer {
         ROUTING_ENRTY entry = getEntry(RecvHeader.ip_dst); // entry 검색
         
         if (entry != null && entry.flag.contains("U")) { // 적중
-        	System.out.println("ok");
+        	
     		if(Arrays.equals(getMaskedIP(RecvHeader.ip_dst, StrToIp(entry.mask)), StrToIp(entry.dst))) { // 동일 LAN
-    			System.out.println("same lan");
+    			
     			ARP_CACHE cache = ARP.getCache(RecvHeader.ip_dst);
     			
 				SendHeader.ip_dst = RecvHeader.ip_dst;
 				SendHeader.ip_src = NILayer.srcIpAddress;
+				
 				ARP.SendHeader.mac_src = NILayer.srcMacAddress;
     			
     			if (cache != null) { // arp 적중
@@ -53,7 +54,7 @@ public class IPLayer extends BaseLayer {
     				SendHeader.data = new byte[0];
     				ARP.Send(ObjToByte(SendHeader)); // arp req 전송
     	            System.out.println("arp req 전송");
-    	            
+    	            System.out.println(IpToStr(SendHeader.ip_src) + "->" + IpToStr(SendHeader.ip_dst));
     				packet_queue.add(input);
     				System.out.println("packet queue에 추가됨");
     				return false;
@@ -96,9 +97,10 @@ public class IPLayer extends BaseLayer {
     	while(iter.hasNext()) {
     		ROUTING_ENRTY entry = iter.next();
     		if(Arrays.equals(getMaskedIP(ip,StrToIp(entry.mask)), StrToIp(entry.dst))) {
-    			if (longest_prefix < entry.gateway.split("255").length-1) {
+    			if (longest_prefix < entry.mask.split("255").length-1) {
     				longest_entry = entry;
-    				longest_prefix = entry.gateway.split("255").length-1;
+    				longest_prefix = entry.mask.split("255").length-1;
+    				
     			}
     		}
     	}

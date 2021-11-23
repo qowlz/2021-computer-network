@@ -133,20 +133,12 @@ public class ApplicationLayer extends BaseLayer{
 			contentPane.setLayout(null);
 			
 			JLabel ProxyEntryIpLabel = new JLabel("Destination");
-<<<<<<< HEAD
-			ProxyEntryIpLabel.setFont(new Font("����", Font.BOLD, 10));
-=======
 			ProxyEntryIpLabel.setFont(new Font("돋움", Font.BOLD, 10));
->>>>>>> af3553c4aeee5a61f6c1f75e0bb014e562284b8d
 			ProxyEntryIpLabel.setBounds(25, 35, 75, 35);
 			contentPane.add(ProxyEntryIpLabel);
 			
 			JLabel proxyEntryEthernetLabel = new JLabel("NetMask");
-<<<<<<< HEAD
-			proxyEntryEthernetLabel.setFont(new Font("����", Font.BOLD, 10));
-=======
 			proxyEntryEthernetLabel.setFont(new Font("돋움", Font.BOLD, 10));
->>>>>>> af3553c4aeee5a61f6c1f75e0bb014e562284b8d
 			proxyEntryEthernetLabel.setBounds(25, 70, 135, 35);
 			contentPane.add(proxyEntryEthernetLabel);
 			
@@ -172,11 +164,7 @@ public class ApplicationLayer extends BaseLayer{
 			});
 			
 			JLabel gatewayLabel = new JLabel("Gateway");
-<<<<<<< HEAD
-			gatewayLabel.setFont(new Font("����", Font.BOLD, 10));
-=======
 			gatewayLabel.setFont(new Font("돋움", Font.BOLD, 10));
->>>>>>> af3553c4aeee5a61f6c1f75e0bb014e562284b8d
 			gatewayLabel.setBounds(25, 105, 135, 35);
 			contentPane.add(gatewayLabel);
 			
@@ -186,11 +174,7 @@ public class ApplicationLayer extends BaseLayer{
 			contentPane.add(Gateway);
 			
 			JLabel flagLabel = new JLabel("Flag");
-<<<<<<< HEAD
-			flagLabel.setFont(new Font("����", Font.BOLD, 10));
-=======
 			flagLabel.setFont(new Font("돋움", Font.BOLD, 10));
->>>>>>> af3553c4aeee5a61f6c1f75e0bb014e562284b8d
 			flagLabel.setBounds(25, 140, 135, 35);
 			contentPane.add(flagLabel);
 			
@@ -206,11 +190,7 @@ public class ApplicationLayer extends BaseLayer{
 			contentPane.add(FlagH);
 
 			JLabel interfaceLabel = new JLabel("Interface");
-<<<<<<< HEAD
-			interfaceLabel.setFont(new Font("����", Font.BOLD, 10));
-=======
 			interfaceLabel.setFont(new Font("돋움", Font.BOLD, 10));
->>>>>>> af3553c4aeee5a61f6c1f75e0bb014e562284b8d
 			interfaceLabel.setBounds(25, 175, 135, 35);
 			contentPane.add(interfaceLabel);
 			
@@ -277,10 +257,6 @@ public class ApplicationLayer extends BaseLayer{
 	}
 	public void updateARPCacheTable(ArrayList<ARP_CACHE> cache_table) {
 		
-<<<<<<< HEAD
-		// ��� �� ����
-=======
->>>>>>> af3553c4aeee5a61f6c1f75e0bb014e562284b8d
 		if (arpModel.getRowCount() > 0) 
 		    for (int i = arpModel.getRowCount() - 1; i > -1; i--)
 		        arpModel.removeRow(i);

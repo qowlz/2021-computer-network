@@ -30,13 +30,13 @@ public class ARPLayer extends BaseLayer{
 		IP_HEADER UpperHeader = ByteToObj(input, IP_HEADER.class);
 		
 		SendHeader.ip_dst = Arrays.copyOf(UpperHeader.ip_dst, 4);
-		SendHeader.opcode = 0x01; // request Å¸ÀÔ
+		SendHeader.opcode = 0x01; // request íƒ€ì…
 		SendHeader.ip_src = Arrays.copyOf(ipAddress,4);
-		SendHeader.mac_src = Arrays.copyOf(macAddress,6); // ¼Û½ÅÁö º»ÀÎÀ¸·Î ¼³Á¤
-		SendHeader.mac_dst = new byte[] {-1,-1,-1,-1,-1,-1}; // ¼ö½ÅÁö ºê·ÎµåÄ³½ºÆÃ
-		// ¸ñÀûÁö ip´Â arpapp layer¿¡¼­ ¼³Á¤
+		SendHeader.mac_src = Arrays.copyOf(macAddress,6); // ì†¡ì‹ ì§€ ë³¸ì¸ìœ¼ë¡œ ì„¤ì •
+		SendHeader.mac_dst = new byte[] {-1,-1,-1,-1,-1,-1}; // ìˆ˜ì‹ ì§€ ë¸Œë¡œë“œìºìŠ¤íŒ…
+		// ëª©ì ì§€ ipëŠ” arpapp layerì—ì„œ ì„¤ì •
 		
-		if(getCache(SendHeader.ip_dst) == null && Arrays.equals(SendHeader.ip_src, SendHeader.ip_dst) != true) { // Çì´õ¿¡ ¸ñÀûÁö ÁÖ¼Ò°¡ ¾ø°Å³ª º»ÀÎ¿¡°Ô º¸³»´Â°Å Á¦¿Ü
+		if(getCache(SendHeader.ip_dst) == null && Arrays.equals(SendHeader.ip_src, SendHeader.ip_dst) != true) { // í—¤ë”ì— ëª©ì ì§€ ì£¼ì†Œê°€ ì—†ê±°ë‚˜ ë³¸ì¸ì—ê²Œ ë³´ë‚´ëŠ”ê±° ì œì™¸
 			byte[] tempMac = new byte[6];
 			ARP_CACHE arpcache = new ARP_CACHE(SendHeader.ip_dst, tempMac, false);
 			addCacheTable(arpcache);
@@ -54,32 +54,32 @@ public class ARPLayer extends BaseLayer{
 		RecvHeader = ByteToObj(input, ARP_HEADER.class);
 		
 		ARP_CACHE tempARP = getCache(RecvHeader.ip_src);
-		if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // ¼Û½ÅÁö°¡ º»ÀÎÀÌ¸é Á¾·á
+		if(Arrays.equals(RecvHeader.ip_src, ipAddress)) return false; // ì†¡ì‹ ì§€ê°€ ë³¸ì¸ì´ë©´ ì¢…ë£Œ
 
-		if(tempARP == null) { // Ä³½ÃÅ×ÀÌºí ¹ÌÀûÁß
+		if(tempARP == null) { // ìºì‹œí…Œì´ë¸” ë¯¸ì ì¤‘
 			ARP_CACHE arpCache = new ARP_CACHE(RecvHeader.ip_src, RecvHeader.mac_src, true);
-			addCacheTable(arpCache); // »õ·Î ¸¸µé¾î¼­ Ãß°¡
-		}else {  // Ä³½ÃÅ×ÀÌºí ÀûÁß
+			addCacheTable(arpCache); // ìƒˆë¡œ ë§Œë“¤ì–´ì„œ ì¶”ê°€
+		}else {  // ìºì‹œí…Œì´ë¸” ì ì¤‘
 			tempARP.status = true;
-			tempARP.mac = Arrays.copyOf(RecvHeader.mac_src, 6); // ¼ö½Å¹ŞÀº µ¥ÀÌÅÍÀÇ ¼Û½ÅÁö·Î µ¤¾î¾²±â
+			tempARP.mac = Arrays.copyOf(RecvHeader.mac_src, 6); // ìˆ˜ì‹ ë°›ì€ ë°ì´í„°ì˜ ì†¡ì‹ ì§€ë¡œ ë®ì–´ì“°ê¸°
 		}
 		updateCacheTable();
 
-		switch (RecvHeader.opcode) { // arp ÆĞÅ¶ ¿ÉÄÚµå·Î ºĞ·ù
+		switch (RecvHeader.opcode) { // arp íŒ¨í‚· ì˜µì½”ë“œë¡œ ë¶„ë¥˜
 		case 0x01: // request
 
-			if(Arrays.equals(RecvHeader.ip_dst, ipAddress)) {	// ¼ö½ÅÁö°¡ º»ÀÎÀÌ¸é
+			if(Arrays.equals(RecvHeader.ip_dst, ipAddress)) {	// ìˆ˜ì‹ ì§€ê°€ ë³¸ì¸ì´ë©´
 				SendHeader.opcode = 0x02; // reply
-				SendHeader.ip_dst = Arrays.copyOf(RecvHeader.ip_src,4); // ¼ö½ÅÁö¸¦ ¸ñÀûÁö·Î
-				SendHeader.mac_dst = Arrays.copyOf(RecvHeader.mac_src,6); // ¼ö½ÅÁö¸¦ ¸ñÀûÁö·Î
-				SendHeader.mac_src = macAddress; // ¼Û½ÅÁö ´Ù½ÃÁöÁ¤
-				SendHeader.ip_src = ipAddress; // ¼Û½ÅÁö ip ³ª·Î ÁöÁ¤
+				SendHeader.ip_dst = Arrays.copyOf(RecvHeader.ip_src,4); // ìˆ˜ì‹ ì§€ë¥¼ ëª©ì ì§€ë¡œ
+				SendHeader.mac_dst = Arrays.copyOf(RecvHeader.mac_src,6); // ìˆ˜ì‹ ì§€ë¥¼ ëª©ì ì§€ë¡œ
+				SendHeader.mac_src = macAddress; // ì†¡ì‹ ì§€ ë‹¤ì‹œì§€ì •
+				SendHeader.ip_src = ipAddress; // ì†¡ì‹ ì§€ ip ë‚˜ë¡œ ì§€ì •
 				GetUnderLayer(0).Send(ObjToByte(SendHeader));
 			}
 			break;
 		case 0x02: // reply
-			System.out.println("ARP ÀÀ´ä ¼ö½Å");
-			// ¼ö½Å ¿Ï·á
+			System.out.println("ARP ì‘ë‹µ ìˆ˜ì‹ ");
+			// ìˆ˜ì‹  ì™„ë£Œ
 			break;
 		}
 		return true;

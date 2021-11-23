@@ -1,5 +1,6 @@
 package router;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -35,28 +36,42 @@ public class IPLayer extends BaseLayer {
         ROUTING_ENRTY entry = getEntry(RecvHeader.ip_dst); // entry 검색
         
         if (entry != null && entry.flag.contains("U")) { // 적중
-        	
+            
     		if(Arrays.equals(getMaskedIP(RecvHeader.ip_dst, StrToIp(entry.mask)), StrToIp(entry.dst))) { // 동일 LAN
     			
     			ARP_CACHE cache = ARP.getCache(RecvHeader.ip_dst);
     			
 				SendHeader.ip_dst = RecvHeader.ip_dst;
-				SendHeader.ip_src = NILayer.srcIpAddress;
+				SendHeader.ip_src = NILayer.allDevs.get(Integer.parseInt(entry.Interface)).getAddresses().get(0).getAddr().getData();
 				
-				ARP.SendHeader.mac_src = NILayer.srcMacAddress;
+				try {
+					ARP.SendHeader.mac_src = NILayer.allDevs.get(Integer.parseInt(entry.Interface)).getHardwareAddress();
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
     			
     			if (cache != null) { // arp 적중
-    				SendHeader.data = input;
-    				ARP.Send(ObjToByte(SendHeader)); // 패킷 패스
-    				return true;
+    				if (cache.status == true) {
+        				System.out.println("arp 적중");
+        				System.out.println(IpToStr(SendHeader.ip_src) + "->" + IpToStr(SendHeader.ip_dst));
+        				
+        				SendHeader.data = input;
+        				ARP.SendHeader.mac_dst = cache.mac;
+        				ARP.Send(ObjToByte(SendHeader)); // 패킷 패스
+        				return true;
+    				}
     			}else { // arp 미적중
     					
     				SendHeader.data = new byte[0];
+    				System.out.println(IpToStr(SendHeader.ip_src) + "->" + IpToStr(SendHeader.ip_dst));
     				ARP.Send(ObjToByte(SendHeader)); // arp req 전송
-    	            System.out.println("arp req 전송");
-    	            System.out.println(IpToStr(SendHeader.ip_src) + "->" + IpToStr(SendHeader.ip_dst));
+    	            //System.out.println("arp req 전송");
     				packet_queue.add(input);
-    				System.out.println("packet queue에 추가됨");
+    				//System.out.println("packet queue에 추가됨");
     				return false;
     			}
     			

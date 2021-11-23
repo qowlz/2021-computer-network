@@ -6,13 +6,19 @@ import javax.swing.table.DefaultTableModel;
 
 import org.jnetpcap.PcapIf;
 
+import router.BaseLayer.ARP_CACHE;
+
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class ApplicationLayer extends BaseLayer{
 	private JTable routingTable;
 
 	private JTable arpCacheTable;
 
+	private DefaultTableModel arpModel;
+	
 	public void CreateWindow()
 	{
 		final int windowWidth = 960;
@@ -94,7 +100,10 @@ public class ApplicationLayer extends BaseLayer{
 
 	public static void main(String[] args) {
 		
-		layerManager.AddLayer(new NILayer("NI"));
+		layerManager.AddLayer(new NILayer(Constants.NILayerName));
+		layerManager.AddLayer(new ARPLayer(Constants.ARPLayerName));
+		layerManager.AddLayer(new EthernetLayer(Constants.EthLayerName));
+		layerManager.AddLayer(new IPLayer(Constants.IPLayerName));
 		layerManager.AddLayer(new ApplicationLayer("App"));
 	}
 	public class ProxyTableAddPopup extends JFrame {
@@ -188,7 +197,7 @@ public class ApplicationLayer extends BaseLayer{
 			Ninterface = new JComboBox();
 			Ninterface.setBounds(170,180,100,20);
 			contentPane.add(Ninterface);
-			NILayer NI = (NILayer) layerManager.GetLayer("NI"); 
+			NILayer NI = (NILayer) layerManager.GetLayer(Constants.NILayerName); 
 			for (PcapIf pcapIf : NI.getAdapterList()) {
 				Ninterface.addItem(pcapIf.getName());
 			}
@@ -223,7 +232,10 @@ public class ApplicationLayer extends BaseLayer{
 		if (row == -1) {
 			return;
 		}
+		System.out.println((String) routingTable.getModel().getValueAt(row, 0));
+
 		((DefaultTableModel) routingTable.getModel()).removeRow(row);
+
 	}
 
 	public void onClickDeleteCacheTableBtn()
@@ -232,7 +244,37 @@ public class ApplicationLayer extends BaseLayer{
 		if (row == -1) {
 			return;
 		}
+		ARPLayer arp = (ARPLayer) layerManager.GetLayer(Constants.ARPLayerName);
+		System.out.println((String) arpCacheTable.getModel().getValueAt(row, 0));
+		arp.cacheRemove(new byte[1]);
 		((DefaultTableModel) arpCacheTable.getModel()).removeRow(row);
+		
+		
+	}
+	public void updateARPCacheTable(ArrayList<ARP_CACHE> cache_table) {
+		
+		// 모든 행 삭제
+		if (arpModel.getRowCount() > 0) 
+		    for (int i = arpModel.getRowCount() - 1; i > -1; i--)
+		        arpModel.removeRow(i);
+
+		//cacheTable -> GUI
+		Iterator<ARP_CACHE> iter = cache_table.iterator();
+    	while(iter.hasNext()) {
+    		ARP_CACHE cache = iter.next();
+    		String[] row = new String[3];
+    		
+    		row[0] = IpToStr(cache.ip);
+    		if(cache.status == false) {
+    			row[1] = "??????????";
+    			row[2] = "incomplete";
+    		}else{
+    			row[1] = MacToStr(cache.mac);
+    			row[2] = "complete";
+    		}
+    		
+    		arpModel.addRow(row);
+    	}
 	}
 
 }

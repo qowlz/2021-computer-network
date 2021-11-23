@@ -19,8 +19,6 @@ public class ApplicationLayer extends BaseLayer{
 
 	private DefaultTableModel arpModel;
 	
-	public static LayerManager layerManager = new LayerManager();
-	
 	public void CreateWindow()
 	{
 		final int windowWidth = 960;

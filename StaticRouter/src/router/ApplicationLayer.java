@@ -257,7 +257,9 @@ public class ApplicationLayer extends BaseLayer{
 	}
 	
 	public void updateRoutingTable(ArrayList<ROUTING_ENRTY> routing_table) {
-		
+		((DefaultTableModel)routingTable.getModel()).setRowCount(0);
+		for (ROUTING_ENRTY entry : routing_table)
+			((DefaultTableModel)routingTable.getModel()).addRow(new String[]{entry.dst, entry.mask, entry.gateway, entry.flag, entry.Interface});
 	}
 	public void updateARPCacheTable(ArrayList<ARP_CACHE> cache_table) {
 		

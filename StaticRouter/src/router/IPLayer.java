@@ -38,12 +38,11 @@ public class IPLayer extends BaseLayer {
         	
     		if(Arrays.equals(getMaskedIP(RecvHeader.ip_dst, StrToIp(entry.mask)), StrToIp(entry.dst))) { // 동일 LAN
     			
-				NILayer NI = (NILayer) Ethernet.GetUnderLayer(Integer.parseInt(entry.Interface)); // 선택된 엔트리의 ni 인덱스로 가져옴		
     			ARP_CACHE cache = ARP.getCache(RecvHeader.ip_dst);
     			
 				SendHeader.ip_dst = RecvHeader.ip_dst;
-				SendHeader.ip_src = NI.ipAddress;
-				ARP.SendHeader.mac_src = NI.macAddress;
+				SendHeader.ip_src = srcIpAddress;
+				ARP.SendHeader.mac_src = srcMacAddress;
     			
     			if (cache != null) { // arp 적중
     				SendHeader.data = input;

@@ -22,9 +22,9 @@ public class LayerManager {
 		var app = layerMap.get(Constants.AppLayerName);
 
 		ni.SetUpperUnderLayer(eth);
-		eth.SetUpperUnderLayer(ip);
+		eth.SetUpperUnderLayer(arp);
+		eth.SetUpperUnderLayer(ip);	
 		ip.SetUnderLayer(arp);
-		arp.SetUnderLayer(eth);
 		app.SetUnderLayer(ip);
 	}
 }

@@ -50,28 +50,19 @@ public class EthernetLayer extends BaseLayer {
 
 		RecvHeader = ByteToObj(input, ETHERNET_HEADER.class);
 
-		NILayer UnderLayer = null;
-		
-		for (BaseLayer ni : p_aUnderLayer) { // 목적지 mac과 동일한 mac의 nilayer를 갖고옴
-			if (Arrays.equals(RecvHeader.mac_dst, ((NILayer)ni).macAddress)) {
-				UnderLayer = ((NILayer)ni);
-				break;
-			}		
-		}
-		
-		if (UnderLayer == null && !isBroadcast(RecvHeader.mac_dst)) // 브로드캐스트 주소가 아닌데 매칭되는 nilayer가 없을때 종료
+		if (srcMacAddress == null && !isBroadcast(RecvHeader.mac_dst)) // 브로드캐스트 주소가 아닌데 매칭되는 nilayer가 없을때 종료
 			return false;
 		
-		if (Arrays.equals(RecvHeader.mac_src, UnderLayer.macAddress)) // 본인이 수신지 일경우 종료
+		if (Arrays.equals(RecvHeader.mac_src, srcMacAddress)) // 본인이 수신지 일경우 종료
 			return false;
 		
 		System.out.println(MacToStr(RecvHeader.mac_src) + " -> " + MacToStr(RecvHeader.mac_dst));
 		
-		if( (Arrays.equals(RecvHeader.mac_dst, UnderLayer.macAddress)) ) { // 수신지가 브로드캐스팅 이거나 나 일경우 수신
+		if( (Arrays.equals(RecvHeader.mac_dst, srcMacAddress)) ) { // 수신지가 브로드캐스팅 이거나 나 일경우 수신
 			System.out.println(RecvHeader.frame_type);
 			if(RecvHeader.frame_type == 0x0806){ // arp 타입이면
 				System.out.println("To ARP Layer");
-				((ARPLayer)GetUpperLayer(0)).Receive(RecvHeader.data, UnderLayer.interfaceID);
+				((ARPLayer)GetUpperLayer(0)).Receive(RecvHeader.data);
 				return true;
 			}else if(RecvHeader.frame_type == 0x0800) { // IP 타입이면
 				System.out.println("이더넷 IP 받음" + GetUpperLayer(1).GetLayerName() + "으로 전송");

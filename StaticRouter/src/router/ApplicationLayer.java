@@ -208,9 +208,9 @@ public class ApplicationLayer extends BaseLayer{
 				String netMask = NetMask.getText().trim();
 				String gateway = Gateway.getText().trim();
 				String nInf = Ninterface.getSelectedItem().toString().trim();
-				boolean flagU = FlagU.isSelected();
-				if (!dst.equals("") && !netMask.equals("") && flagU	&& !gateway.equals("") && !nInf.equals("")) {
-					String flag = "U";
+				String flag = new String();
+				if (!dst.equals("") && !netMask.equals("")&& !gateway.equals("") && !nInf.equals("")) {
+					if (FlagU.isSelected()) flag+="U";
 					if (FlagG.isSelected()) flag+="G";
 					if (FlagH.isSelected()) flag+="H";
 					IPLayer ip = (IPLayer) layerManager.GetLayer(Constants.IPLayerName);

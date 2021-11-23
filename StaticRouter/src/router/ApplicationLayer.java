@@ -236,8 +236,6 @@ public class ApplicationLayer extends BaseLayer{
 		if (row == -1) {
 			return;
 		}
-		System.out.println((String) routingTable.getModel().getValueAt(row, 0));
-
 		((DefaultTableModel) routingTable.getModel()).removeRow(row);
 
 	}
@@ -249,8 +247,6 @@ public class ApplicationLayer extends BaseLayer{
 			return;
 		}
 		ARPLayer arp = (ARPLayer) layerManager.GetLayer(Constants.ARPLayerName);
-		System.out.println((String) arpCacheTable.getModel().getValueAt(row, 0));
-		arp.cacheRemove(new byte[1]);
 		((DefaultTableModel) arpCacheTable.getModel()).removeRow(row);
 		
 		

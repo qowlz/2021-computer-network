@@ -94,9 +94,10 @@ class Receive_Thread implements Runnable {
 				int id = JRegistry.mapDLTToId(adapter.datalink());
 				PcapHeader header = new PcapHeader(JMemory.POINTER);
 				JBuffer buff = new JBuffer(JMemory.POINTER);
-				PcapPacket packet = new PcapPacket(header, buff);
 
 				if (adapter.nextEx(header, buff) != Pcap.NEXT_EX_OK) continue;
+				
+				PcapPacket packet = new PcapPacket(header, buff);
 				packet.scan(id);
 				
 				data = packet.getByteArray(0, packet.size());

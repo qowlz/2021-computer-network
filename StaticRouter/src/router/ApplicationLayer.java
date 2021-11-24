@@ -60,7 +60,7 @@ public class ApplicationLayer extends BaseLayer{
 		cachePanel.add(cacheTitle, gbc);
 
 		arpCacheTable = new JTable(new DefaultTableModel(new String[][] {},
-				new String[]{"IP Address", "Ethernet Address", "Interface", "Flag"}));
+				new String[]{"IP Address", "Ethernet Address", "Flag", "Interface"}));
 		JScrollPane sp2 =new JScrollPane(arpCacheTable);
 		gbc.fill = GridBagConstraints.BOTH;
 		gbc.weighty = 0.6;
@@ -273,11 +273,15 @@ public class ApplicationLayer extends BaseLayer{
 		DefaultTableModel arpModel = (DefaultTableModel)arpCacheTable.getModel();
 		
 		arpModel.setRowCount(0);
+<<<<<<< HEAD
+=======
+
+>>>>>>> bc13f05af1a3b6e6bc1a45e750de1d7bb352b680
 		//cacheTable -> GUI
 		Iterator<ARP_CACHE> iter = cache_table.iterator();
     	while(iter.hasNext()) {
     		ARP_CACHE cache = iter.next();
-    		String[] row = new String[3];
+    		String[] row = new String[4];
     		
     		row[0] = IpToStr(cache.ip);
     		if(cache.status == false) {
@@ -287,6 +291,12 @@ public class ApplicationLayer extends BaseLayer{
     			row[1] = MacToStr(cache.mac);
     			row[2] = "complete";
     		}
+<<<<<<< HEAD
+=======
+    		
+    		row[3] = Integer.toString(cache.port); 
+    		
+>>>>>>> bc13f05af1a3b6e6bc1a45e750de1d7bb352b680
     		arpModel.addRow(row);
     	}
 	}

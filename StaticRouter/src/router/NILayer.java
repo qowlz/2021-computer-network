@@ -53,9 +53,11 @@ public class NILayer extends BaseLayer {
 		}
 		return true;
 	}
+	
 	public ArrayList<PcapIf> getAdapterList() {
 		return allDevs;
 	}
+	
 	public static byte[] getMacAddress(int interfaceID) {
 		byte[] mac = null;
 		try {
@@ -65,12 +67,12 @@ public class NILayer extends BaseLayer {
 		}
 		return mac;
 	}
+	
 	public static byte[] getIpAddress(int interfaceID) {
 		byte[] ip = null;
 		ip = NILayer.allDevs.get(interfaceID).getAddresses().get(0).getAddr().getData(); // 선택된 interface port로 ip 지정
 		return ip;
 	}
-
 }
 
 class Receive_Thread implements Runnable {
@@ -92,18 +94,14 @@ class Receive_Thread implements Runnable {
 				int id = JRegistry.mapDLTToId(adapter.datalink());
 				PcapHeader header = new PcapHeader(JMemory.POINTER);
 				JBuffer buff = new JBuffer(JMemory.POINTER);
+				PcapPacket packet = new PcapPacket(header, buff);
 
 				if (adapter.nextEx(header, buff) != Pcap.NEXT_EX_OK) continue;
-
-				var packet = new PcapPacket(header, buff);
 				packet.scan(id);
+				
 				data = packet.getByteArray(0, packet.size());
-
 				UpperLayer.Receive(data, i);
 			}
 		}
-		//adapter.close();
-		//System.exit(0);
 	}
-
 }

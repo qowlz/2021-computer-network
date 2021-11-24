@@ -9,15 +9,9 @@ import javax.swing.JOptionPane;
 public class ARPLayer extends BaseLayer{
 
 	private static ArrayList<ARP_CACHE> cache_table = new ArrayList<ARP_CACHE>();
-	
-	private static ApplicationLayer appLayer;
-	
+		
 	ARP_HEADER SendHeader = new ARP_HEADER();
 	ARP_HEADER RecvHeader = new ARP_HEADER();
-	
-	public void setArpAppLayer(ApplicationLayer Layer) {
-		appLayer = Layer;
-	}
 	
 	public ARPLayer(String pName) {
 		pLayerName = pName;	
@@ -132,6 +126,6 @@ public class ARPLayer extends BaseLayer{
     	return null;
     }
     public void updateCacheTable() {
-    	appLayer.updateARPCacheTable(cache_table);
+    	((ApplicationLayer)layerManager.GetLayer(Constants.AppLayerName)).updateARPCacheTable(cache_table);
     }
 }

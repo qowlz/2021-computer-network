@@ -98,16 +98,18 @@ public class ApplicationLayer extends BaseLayer{
 	}
 
 	public static void main(String[] args) {
+		
 		layerManager.AddLayer(new NILayer(Constants.NILayerName));
 		layerManager.AddLayer(new ARPLayer(Constants.ARPLayerName));
 		layerManager.AddLayer(new EthernetLayer(Constants.EthLayerName));
 		layerManager.AddLayer(new IPLayer(Constants.IPLayerName));
 		layerManager.AddLayer(new ApplicationLayer(Constants.AppLayerName));
-		((ARPLayer)layerManager.GetLayer(Constants.ARPLayerName)).setArpAppLayer(((ApplicationLayer)layerManager.GetLayer(Constants.AppLayerName)));
 		layerManager.ConnectLayers();
 		IPLayer ip = (IPLayer) layerManager.GetLayer(Constants.IPLayerName);
 		ip.addEntry(new ROUTING_ENRTY("192.168.56.0","255.255.255.0","0.0.0.0","UH","0","1"));
+		ip.addEntry(new ROUTING_ENRTY("192.168.0.0","255.255.0.0","0.0.0.0","UH","2","1"));
 		ip.addEntry(new ROUTING_ENRTY("192.168.0.0","255.255.255.0","0.0.0.0","UH","1","1"));
+		
 		((NILayer)layerManager.GetLayer(Constants.NILayerName)).Receive();
 	}
 	public class ProxyTableAddPopup extends JFrame {

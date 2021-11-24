@@ -45,11 +45,14 @@ public abstract class BaseLayer {
     	public byte[] ip = new byte[4];
     	public byte[] mac = new byte[6];
     	public boolean status;
+    	public int port;
     	
-    	public ARP_CACHE(byte[] ipAddress, byte[] macAddress, boolean status) {
+    	public ARP_CACHE(byte[] ipAddress, byte[] macAddress, boolean status, int port) {
     		this.ip = ipAddress;
     		this.mac = macAddress;
     		this.status = status;
+    		this.port = port;
+    		
     	}
     }
     

@@ -43,7 +43,7 @@ public class ARPLayer extends BaseLayer{
 		if(getCache(SendHeader.ip_dst) == null && Arrays.equals(SendHeader.ip_src, SendHeader.ip_dst) != true) { // 헤더에 목적지 주소가 없거나 본인에게 보내는거 제외
 			
 			byte[] tempMac = new byte[6];
-			ARP_CACHE arpcache = new ARP_CACHE(SendHeader.ip_dst, tempMac, false);
+			ARP_CACHE arpcache = new ARP_CACHE(SendHeader.ip_dst, tempMac, false, interfaceID);
 			addCacheTable(arpcache);
 			
 			updateCacheTable();
@@ -65,7 +65,7 @@ public class ARPLayer extends BaseLayer{
 		//System.out.println(MacToStr(RecvHeader.mac_src) + " -arp> " + MacToStr(RecvHeader.mac_dst));
 		
 		if(tempARP == null) { // 캐시테이블 미적중
-			ARP_CACHE arpCache = new ARP_CACHE(RecvHeader.ip_src, RecvHeader.mac_src, true);
+			ARP_CACHE arpCache = new ARP_CACHE(RecvHeader.ip_src, RecvHeader.mac_src, true, interfaceID);
 			addCacheTable(arpCache); // 새로 만들어서 추가
 		}else {  // 캐시테이블 적중
 			tempARP.status = true;

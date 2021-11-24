@@ -18,12 +18,6 @@ public class NILayer extends BaseLayer {
 	private StringBuilder errbuf = new StringBuilder();
 	
 	private ArrayList<Pcap> adapters = new ArrayList<Pcap>();
-	
-	public static byte[] srcMacAddress = null;
-	
-	public static byte[] srcIpAddress = null;
-	
-	public static int pcapIdx;
 
 	public NILayer(String pName) {
 		pLayerName = pName;	
@@ -50,17 +44,31 @@ public class NILayer extends BaseLayer {
 		return true;
 	}
 	
-	@Override
-	public boolean Send(byte[] data) {
+	public boolean Send(byte[] data, int interfaceID) {
+		
 		ByteBuffer buf = ByteBuffer.wrap(data);
-		if (adapters.get(pcapIdx).sendPacket(buf) != Pcap.OK) {
-			System.err.println(adapters.get(pcapIdx).getErr());
+		if (adapters.get(interfaceID).sendPacket(buf) != Pcap.OK) {
+			System.err.println(adapters.get(interfaceID).getErr());
 			return false;
 		}
 		return true;
 	}
 	public ArrayList<PcapIf> getAdapterList() {
 		return allDevs;
+	}
+	public static byte[] getMacAddress(int interfaceID) {
+		byte[] mac = null;
+		try {
+			mac = NILayer.allDevs.get(interfaceID).getHardwareAddress();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return mac;
+	}
+	public static byte[] getIpAddress(int interfaceID) {
+		byte[] ip = null;
+		ip = NILayer.allDevs.get(interfaceID).getAddresses().get(0).getAddr().getData(); // 선택된 interface port로 ip 지정
+		return ip;
 	}
 
 }
@@ -81,7 +89,6 @@ class Receive_Thread implements Runnable {
 	
 			for (int i = 0; i < adapters.size(); i++){
 				Pcap adapter = adapters.get(i);
-				NILayer.pcapIdx = i;
 				int id = JRegistry.mapDLTToId(adapter.datalink());
 				PcapHeader header = new PcapHeader(JMemory.POINTER);
 				JBuffer buff = new JBuffer(JMemory.POINTER);
@@ -91,13 +98,8 @@ class Receive_Thread implements Runnable {
 				var packet = new PcapPacket(header, buff);
 				packet.scan(id);
 				data = packet.getByteArray(0, packet.size());
-				PcapIf device = NILayer.allDevs.get(i);
-				try {
-					NILayer.srcMacAddress = device.getHardwareAddress();
-				} catch (IOException e) {}
 
-				NILayer.srcIpAddress = device.getAddresses().get(0).getAddr().getData();
-				UpperLayer.Receive(data);
+				UpperLayer.Receive(data, i);
 			}
 		}
 		//adapter.close();

@@ -14,7 +14,7 @@ public class EthernetLayer extends BaseLayer {
 	}
 	
 	@Override
-	public boolean Send(byte[] input) {
+	public boolean Send(byte[] input, int interfaceID) {
 		// log("sending packet to under layer");
 		ARP_HEADER UpperHeader = ByteToObj(input, ARP_HEADER.class);
 		SendHeader.mac_dst = UpperHeader.mac_dst;
@@ -23,12 +23,11 @@ public class EthernetLayer extends BaseLayer {
 		if (SendHeader.frame_type == 0x0800) { // ip에서 날라온거
 			//System.out.println("IP Send Packet");
 
-			//System.out.println(MacToStr(SendHeader.mac_src) + " -> " + MacToStr(SendHeader.mac_dst));
-			this.GetUnderLayer(0).Send(ObjToByte(SendHeader));
+			System.out.println(MacToStr(SendHeader.mac_src) + " -ether ip> " + MacToStr(SendHeader.mac_dst));
+			this.GetUnderLayer(0).Send(ObjToByte(SendHeader), interfaceID);
 			return true;
 			
 		}else {
-			
 
 			SendHeader.frame_type = 0x0806; // arp 타입
 
@@ -42,35 +41,36 @@ public class EthernetLayer extends BaseLayer {
 			}
 			System.out.println("ARP Send Packet");
 			System.out.println(SendHeader.frame_type);
-			System.out.println(MacToStr(SendHeader.mac_src) + " -> " + MacToStr(SendHeader.mac_dst));
+			System.out.println(MacToStr(SendHeader.mac_src) + " -ether arp> " + MacToStr(SendHeader.mac_dst));
 			
-			this.GetUnderLayer(0).Send(ObjToByte(SendHeader));
+			SendHeader.data = input;
+			this.GetUnderLayer(0).Send(ObjToByte(SendHeader), interfaceID);
 			return true;
 		}
 	}
 	
-	public synchronized boolean Receive(byte[] input) {
+	public synchronized boolean Receive(byte[] input, int interfaceID) {
 
 		RecvHeader = ByteToObj(input, ETHERNET_HEADER.class);
 		
-		if (NILayer.srcMacAddress == null && !isBroadcast(RecvHeader.mac_dst)) // 브로드캐스트 주소가 아닌데 매칭되는 nilayer가 없을때 종료
+		if (NILayer.getIpAddress(interfaceID) == null && !isBroadcast(RecvHeader.mac_dst)) // 브로드캐스트 주소가 아닌데 매칭되는 nilayer가 없을때 종료
 			return false;
 		
-		if (Arrays.equals(RecvHeader.mac_src, NILayer.srcMacAddress)) // 본인이 수신지 일경우 종료
+		if (Arrays.equals(RecvHeader.mac_src, NILayer.getMacAddress(interfaceID))) // 본인이 수신지 일경우 종료
 			return false;
 		
 		//System.out.println(MacToStr(RecvHeader.mac_src) + " -> " + MacToStr(RecvHeader.mac_dst));
 		
-		if( (Arrays.equals(RecvHeader.mac_dst, NILayer.srcMacAddress)) ) { // 수신지가 브로드캐스팅 이거나 나 일경우 수신
+		if( (Arrays.equals(RecvHeader.mac_dst, NILayer.getMacAddress(interfaceID))) ) { // 수신지가 브로드캐스팅 이거나 나 일경우 수신
 
 			if(RecvHeader.frame_type == 0x0806){ // arp 타입이면
 				//System.out.println("To ARP Layer");
-				System.out.println(MacToStr(RecvHeader.mac_src) + " -> " + MacToStr(RecvHeader.mac_dst));
-				((ARPLayer)GetUpperLayer(0)).Receive(RecvHeader.data);
+				System.out.println(MacToStr(RecvHeader.mac_src) + " -ether arp> " + MacToStr(RecvHeader.mac_dst));
+				((ARPLayer)GetUpperLayer(0)).Receive(RecvHeader.data, interfaceID);
 				return true;
 			}else if(RecvHeader.frame_type == 0x0800) { // IP 타입이면
-				
-				this.GetUpperLayer(1).Receive(RecvHeader.data);
+				//System.out.println(MacToStr(RecvHeader.mac_src) + " -ip> " + MacToStr(RecvHeader.mac_dst));
+				this.GetUpperLayer(1).Receive(RecvHeader.data, interfaceID);
 				return true;
 			}
 		}

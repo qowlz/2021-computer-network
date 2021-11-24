@@ -10,7 +10,17 @@ public class IPLayer extends BaseLayer {
 	IP_HEADER SendHeader = new IP_HEADER();
 	IP_HEADER RecvHeader = new IP_HEADER();
 
-	public static ArrayList<byte[]> packet_queue = new ArrayList<byte[]>();
+    public static class PACKET_ITEM{
+    	public byte[] data;
+    	public int interfaceID;
+
+    	public PACKET_ITEM(byte[] inp, int id) {
+    		this.data = inp;
+    		this.interfaceID = id;
+    	}
+    }
+    
+	public static ArrayList<PACKET_ITEM> packet_queue = new ArrayList<PACKET_ITEM>();
 	
 	public static ArrayList<ROUTING_ENRTY> RoutingTable = new ArrayList<ROUTING_ENRTY>();
 
@@ -19,59 +29,64 @@ public class IPLayer extends BaseLayer {
     }
 
     @Override
-    public boolean Receive(byte[] input) {
+    public boolean Receive(byte[] input, int interfaceID) {
     	
-        RecvHeader = ByteToObj(input, IP_HEADER.class);
+        RecvHeader = ByteToObj(input, IP_HEADER.class);	
+        ARPLayer ARP = (ARPLayer) GetUnderLayer(0);
         
 		 int len = packet_queue.size();
+		 if (len > 128) {
+			 packet_queue.clear();
+			 len = 0;
+		 }
+			 	 
          for (int idx = len-1; idx >= 0; idx--) {
-        	 byte[] recv_data = packet_queue.get(idx);
-        	 packet_queue.remove(idx);
-        	 Receive(recv_data);
+        	 PACKET_ITEM recv_data = packet_queue.get(idx);
+        	 
+        	 ARP_CACHE cache = ARP.getCache(RecvHeader.ip_dst);
+        	 if (cache != null) { // arp 적중
+        		 if (cache.status == true) {
+        			packet_queue.remove(idx);
+     				SendHeader.ip_dst = RecvHeader.ip_dst;
+    				SendHeader.ip_src = NILayer.getIpAddress(recv_data.interfaceID); 
+     				SendHeader.data = recv_data.data;
+     				ARP.SendHeader.mac_dst = cache.mac; // cache mac을 dst로 지정
+     				ARP.Send(ObjToByte(SendHeader), recv_data.interfaceID); // 패킷 패스
+        		 }
+        	 }
+        	 
+        	 
          }
-		
-        ARPLayer ARP = (ARPLayer) GetUnderLayer(0);
-        EthernetLayer Ethernet = (EthernetLayer) ARP.GetUnderLayer(0);
-        
+         
         ROUTING_ENRTY entry = getEntry(RecvHeader.ip_dst); // entry 검색
         
+        
         if (entry != null && entry.flag.contains("U")) { // 적중
-            
+        	System.out.println("outport : " + entry.Interface);
+        	System.out.println(IpToStr(RecvHeader.ip_src) + " -ip> " + IpToStr(RecvHeader.ip_dst));
     		if(Arrays.equals(getMaskedIP(RecvHeader.ip_dst, StrToIp(entry.mask)), StrToIp(entry.dst))) { // 동일 LAN
     			
     			ARP_CACHE cache = ARP.getCache(RecvHeader.ip_dst);
+    			int portIndex = Integer.parseInt(entry.Interface);
     			
 				SendHeader.ip_dst = RecvHeader.ip_dst;
-				SendHeader.ip_src = NILayer.allDevs.get(Integer.parseInt(entry.Interface)).getAddresses().get(0).getAddr().getData();
+				SendHeader.ip_src = NILayer.getIpAddress(portIndex); // 선택된 interface port로 ip 지정
 				
-				try {
-					ARP.SendHeader.mac_src = NILayer.allDevs.get(Integer.parseInt(entry.Interface)).getHardwareAddress();
-				} catch (NumberFormatException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-    			
     			if (cache != null) { // arp 적중
     				if (cache.status == true) {
-        				System.out.println("arp 적중");
-        				System.out.println(IpToStr(SendHeader.ip_src) + "->" + IpToStr(SendHeader.ip_dst));
-        				
+    					System.out.println("arp ok");
         				SendHeader.data = input;
-        				ARP.SendHeader.mac_dst = cache.mac;
-        				ARP.Send(ObjToByte(SendHeader)); // 패킷 패스
+        				ARP.SendHeader.mac_dst = cache.mac; // cache mac을 dst로 지정
+        				ARP.Send(ObjToByte(SendHeader), portIndex); // 패킷 패스
         				return true;
     				}
     			}else { // arp 미적중
     					
+    				
     				SendHeader.data = new byte[0];
-    				System.out.println(IpToStr(SendHeader.ip_src) + "->" + IpToStr(SendHeader.ip_dst));
-    				ARP.Send(ObjToByte(SendHeader)); // arp req 전송
-    	            //System.out.println("arp req 전송");
-    				packet_queue.add(input);
-    				//System.out.println("packet queue에 추가됨");
+    				ARP.Send(ObjToByte(SendHeader), portIndex); // arp req 전송
+    				
+    				packet_queue.add(new PACKET_ITEM(input, Integer.parseInt(entry.Interface)));
     				return false;
     			}
     			

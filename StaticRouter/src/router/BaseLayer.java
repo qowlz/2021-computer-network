@@ -70,7 +70,6 @@ public abstract class BaseLayer {
     		this.Metric = Metric;
     	}
     }
-    
 	
 	public int nUpperLayerCount = 0;
 	public int nUnderLayerCount = 0;
@@ -115,14 +114,14 @@ public abstract class BaseLayer {
 		pUULayer.SetUnderLayer(this);
 	}
 
-	public boolean Send(byte[] input) {
-		this.GetUnderLayer(0).Send(input);
+	public boolean Send(byte[] input, int interfaceID) {
+		this.GetUnderLayer(0).Send(input, interfaceID);
 		return false;
 	}
 
-	public boolean Receive(byte[] input) {
+	public boolean Receive(byte[] input, int interfaceID) {
 
-		this.GetUpperLayer(0).Receive(input);
+		this.GetUpperLayer(0).Receive(input, interfaceID);
 		return false;
 	}
 	

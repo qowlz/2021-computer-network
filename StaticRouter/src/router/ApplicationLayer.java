@@ -273,10 +273,6 @@ public class ApplicationLayer extends BaseLayer{
 		DefaultTableModel arpModel = (DefaultTableModel)arpCacheTable.getModel();
 		
 		arpModel.setRowCount(0);
-<<<<<<< HEAD
-=======
-
->>>>>>> bc13f05af1a3b6e6bc1a45e750de1d7bb352b680
 		//cacheTable -> GUI
 		Iterator<ARP_CACHE> iter = cache_table.iterator();
     	while(iter.hasNext()) {
@@ -290,14 +286,9 @@ public class ApplicationLayer extends BaseLayer{
     		}else{
     			row[1] = MacToStr(cache.mac);
     			row[2] = "complete";
+    			row[3] = Integer.toString(cache.port); 
+    		    arpModel.addRow(row);
     		}
-<<<<<<< HEAD
-=======
-    		
-    		row[3] = Integer.toString(cache.port); 
-    		
->>>>>>> bc13f05af1a3b6e6bc1a45e750de1d7bb352b680
-    		arpModel.addRow(row);
     	}
 	}
 

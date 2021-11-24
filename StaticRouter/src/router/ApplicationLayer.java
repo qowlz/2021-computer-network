@@ -106,13 +106,16 @@ public class ApplicationLayer extends BaseLayer{
 		layerManager.AddLayer(new ApplicationLayer(Constants.AppLayerName));
 		layerManager.ConnectLayers();
 		IPLayer ip = (IPLayer) layerManager.GetLayer(Constants.IPLayerName);
+		((NILayer)layerManager.GetLayer(Constants.NILayerName)).Receive();
+		
+		/* Longest entry test
 		ip.addEntry(new ROUTING_ENRTY("192.168.56.0","255.255.255.0","0.0.0.0","UH","0","1"));
 		ip.addEntry(new ROUTING_ENRTY("192.168.0.0","255.255.0.0","0.0.0.0","UH","2","1"));
 		ip.addEntry(new ROUTING_ENRTY("192.168.0.0","255.255.255.0","0.0.0.0","UH","1","1"));
-		
-		((NILayer)layerManager.GetLayer(Constants.NILayerName)).Receive();
+		ip.getEntry(new byte[] {(byte) 192,(byte) 168,0,1});
+		*/
 	}
-	public class ProxyTableAddPopup extends JFrame {
+	public class RoutingTableAddPopup extends JFrame {
 
 		private JPanel contentPane;
 		
@@ -127,7 +130,7 @@ public class ApplicationLayer extends BaseLayer{
 
 		private JComboBox<String> Ninterface;
 		
-		ProxyTableAddPopup(){
+		RoutingTableAddPopup(){
 
 			setTitle("Routing table add");
 			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -184,9 +187,9 @@ public class ApplicationLayer extends BaseLayer{
 			flagLabel.setBounds(25, 140, 135, 35);
 			contentPane.add(flagLabel);
 			
-			JCheckBox FlagU = new JCheckBox("UP");
-			JCheckBox FlagG = new JCheckBox("Gateway");
-			JCheckBox FlagH = new JCheckBox("Host");
+			FlagU = new JCheckBox("UP");
+			FlagG = new JCheckBox("Gateway");
+			FlagH = new JCheckBox("Host");
 			FlagU.setBounds(170, 140, 50 , 30);
 			FlagG.setBounds(220, 140, 100, 30);
 			FlagH.setBounds(320, 140, 80 , 30);
@@ -200,7 +203,7 @@ public class ApplicationLayer extends BaseLayer{
 			interfaceLabel.setBounds(25, 175, 135, 35);
 			contentPane.add(interfaceLabel);
 			
-			Ninterface = new JComboBox();
+			Ninterface = new JComboBox<String>();
 			Ninterface.setBounds(170,180,220,20);
 			contentPane.add(Ninterface);
 			NILayer NI = (NILayer) layerManager.GetLayer(Constants.NILayerName); 
@@ -234,8 +237,7 @@ public class ApplicationLayer extends BaseLayer{
 	}
 	public void onClickAddRoutingTableBtn()
 	{
-		//FIXME: test code
-		new ProxyTableAddPopup();
+		new RoutingTableAddPopup();
 	}
 
 	public void onClickDeleteRoutingTableBtn()
@@ -270,10 +272,7 @@ public class ApplicationLayer extends BaseLayer{
 		
 		DefaultTableModel arpModel = (DefaultTableModel)arpCacheTable.getModel();
 		
-		if (arpModel.getRowCount() > 0) 
-		    for (int i = arpModel.getRowCount() - 1; i > -1; i--)
-		        arpModel.removeRow(i);
-
+		arpModel.setRowCount(0);
 		//cacheTable -> GUI
 		Iterator<ARP_CACHE> iter = cache_table.iterator();
     	while(iter.hasNext()) {
@@ -288,7 +287,6 @@ public class ApplicationLayer extends BaseLayer{
     			row[1] = MacToStr(cache.mac);
     			row[2] = "complete";
     		}
-    		
     		arpModel.addRow(row);
     	}
 	}
